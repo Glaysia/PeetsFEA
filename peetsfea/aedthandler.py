@@ -311,7 +311,7 @@ AedtHandler()
 if __name__ == '__main__':
 
   AedtHandler.initialize(
-    project_name="AIPDProject", project_path=Path.cwd().joinpath("test"),
+    project_name="AIPDProject", project_path=Path.cwd().joinpath("../test"),
     design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   )
   AedtHandler.peets_aedt.close_desktop()
