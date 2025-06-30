@@ -105,6 +105,7 @@ class AedtHandler:
     AedtHandler.project_path: Path
     AedtHandler.design_name: str
     AedtHandler.solution_type: str
+    AedtHandler.logger = logging.getLogger("Global")
 
     # AedtHandler.coil: Coil
 
@@ -193,8 +194,7 @@ class AedtHandler:
           f"\nset_project_properties를 하고 실행해야 합니다."
       )
 
-    cls.oproj: AedtPropServer = cls.peets_aedt.active_project(  # type: ignore
-      name=cls.project_name)
+    cls.oproj: AedtPropServer = cls.peets_aedt.active_project()  # type: ignore
 
     try:
       cls.peets_m3d = MyMaxwell3d(
@@ -302,16 +302,26 @@ class AedtHandler:
     cls.reset_project()
     cls.save_project()
 
+    cls.oproj: AedtPropServer = cls.peets_aedt.active_project()  # type: ignore
+    cls.log("데스크톱을 초기화했습니다.")
+
   # @classmethod
   # def set_input(cls, input_coil: CoilDesignParam) -> None:
   #   cls.input_coil: CoilDesignParam = input_coil
+
+  @classmethod
+  def log(cls, msg: str) -> None:
+    cls.peets_aedt._odesktop.AddMessage(  # type: ignore
+      cls.project_name, cls.design_name, 0, f"[PeetsFEA] {msg}")
+
+    cls.logger.log(logging.INFO, f"[PeetsFEA] {msg}")
 
 
 AedtHandler()
 if __name__ == '__main__':
 
   AedtHandler.initialize(
-    project_name="AIPDProject", project_path=Path.cwd().joinpath("../test"),
+    project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
     design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   )
   AedtHandler.peets_aedt.close_desktop()
