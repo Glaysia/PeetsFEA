@@ -1,8 +1,21 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal, TypedDict
-from aedthandler import AedtHandler
+from typing import Any, Literal, Sequence, TypedDict
+from abc import ABC, abstractmethod
+
+from ansys.aedt.core.maxwell import Maxwell3d
+from ansys.aedt.core.modeler.cad.elements_3d import Plane, Point
+from ansys.aedt.core.modeler.cad.object_3d import Object3d
+from ansys.aedt.core.modeler.cad.polylines import Polyline
+from ansys.aedt.core.modeler.modeler_2d import Modeler2D
+from ansys.aedt.core.modeler.modeler_3d import Modeler3D
+
+from aedthandler import AedtHandler, AedtInitializationError
+from ansys.aedt.core.modules.material_lib import Materials
 from ansys.aedt.core.generic.constants import SOLUTIONS
+from ansys.aedt.core.modules.material import Material
+from ansys.aedt.core.modules.solve_setup import SetupMaxwell
+from ansys.aedt.core.modules.solve_sweeps import SetupProps
 from pathlib import Path
 
 import numpy as np
@@ -53,12 +66,20 @@ class XformerEntry(TypedDict):
 class XformerMakerInterface(ABC):
   def __init__(self, name: str, aedt_dir: str) -> None:
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
+    self.per: int = 3000
+    self.freq_khz: int = 140
 
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
     )
-    pass
+
+    if not isinstance(AedtHandler.peets_m3d.modeler, Modeler3D):
+      raise AedtInitializationError("[PeetsFEA] AedtHandler is not intialized")
+
+    self.modeler: Modeler3D = AedtHandler.peets_m3d.modeler
+
+    assert self.modeler, "[PeetsFEA] modeler failed"
 
   def _random_choice(self, X: tuple[float, float, float, int]) -> float:
     """
@@ -145,6 +166,19 @@ class XformerMakerInterface(ABC):
     return self._coil_types_template
 
   def set_material(self) -> None:
+    self.mat: Material | Literal[False] = AedtHandler.peets_m3d.materials.duplicate_material(  # type: ignore
+      material="ferrite", name="ferrite_simulation")
+
+    if not isinstance(self.mat, Material):
+      raise RuntimeError("[PeetsFEA] duplicate_material failed")
+    self.mat.permeability = self.per
+    self.bp_point: Sequence[Sequence[float]] = [[0, 0], [0.05, 20.32], [0.06, 35.08], [0.07, 55.3], [
+      0.08, 80.4], [0.09, 111.05], [0.1, 156.79], [0.2, 1002.4]]
+    self.mat.set_bp_curve_coreloss(  # type: ignore
+      points=self.bp_point, frequency=self.freq_khz * 1000)
+
+    # print(f"[PeetsFEA] DEBUG:{self.mat.permeability.value}")  # type: ignore
+
   @abstractmethod
   def set_variable(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
@@ -152,17 +186,37 @@ class XformerMakerInterface(ABC):
   @abstractmethod
   def create_core(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
+
   @abstractmethod
   def create_winding(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
+
   @abstractmethod
   def create_exctation(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
-  def _create_polyline(self, points, name, coil_width, coil_height) -> None:
-    pass
+  def _create_polyline(self, points, name, coil_width, coil_height) -> Polyline:
+    polyline_obj: Polyline = self.modeler.create_polyline(
+        points,
+        name=name,
+        material="copper",
+        xsection_type="Rectangle",
+        xsection_width=coil_width,
+        xsection_height=coil_height)
+
+    return polyline_obj
 
   def create_region(self) -> None:
+
+    region: Point | Plane | Object3d | Literal[False] = self.modeler.create_air_region(
+      z_pos="800", z_neg="800", y_pos="300", y_neg="300", x_pos="0", x_neg="0")  # type: ignore
+
+    AedtHandler.peets_m3d.assign_material(assignment=region, material="vacuum")
+    region_face = self.modeler.get_object_faces("Region")
+    # region_face
+    AedtHandler.peets_m3d.assign_radiation(
+      assignment=region_face, radiation="Radiation")
+
   @abstractmethod
   def assign_mesh(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
@@ -182,8 +236,9 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
   x = XformerMakerInterface(name=name, aedt_dir=aedt_dir)
 
+  x.set_material()
   # AedtHandler.initialize(
   #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
   #   design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   # )
-  AedtHandler.peets_aedt.close_desktop()
+  # AedtHandler.peets_aedt.close_desktop()

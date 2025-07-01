@@ -145,3 +145,86 @@ Starting Batch Run: 5:13:36 PM  Jun 30, 2025
 Running as user : DESKTOP-L5CB36B\5600X2
 Temp directory: C:\Users\5600X2\AppData\Local\Temp
 Project directory: C:\Users\5600X2\Documents\Ansoft
+-- Message Window --
+      *Global - Messages
+        [info] GRPC server running on port: 56513. 
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'xform_yDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project xform_yProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'PeetsFEAdevDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project PeetsFEAdevProject Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'PeetsFEAdev_Design' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project PeetsFEAdev_Project Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'PeetsFEAdev_Design' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project PeetsFEAdev_Project Saved correctly
+        [info] Project tmp has been created.
+        [info] Added design 'AIPDDesign' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project AIPDProject Saved correctly
+-- Message Window --
+Stopping Batch Run: 1:02:03 PM  Jul 01, 2025

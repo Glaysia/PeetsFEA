@@ -38,3 +38,43 @@ Project directory: C:\Users\5600X2\Documents\Ansoft
         [info] Project AIPDProject Saved correctly
 -- Message Window --
 Stopping Batch Run: 3:41:46 PM  Jun 30, 2025
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:23:50
+Location: C:\Program Files\AnsysEM\v242\Win64\ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 1:02:13 PM  Jul 01, 2025
+Running as user : DESKTOP-L5CB36B\5600X2
+Temp directory: C:\Users\5600X2\AppData\Local\Temp
+Project directory: C:\Users\5600X2\Documents\Ansoft
+-- Message Window --
+      *Global - Messages
+        [info] GRPC server running on port: 64833. 
+        [info] Project tmp has been created.
+        [info] Added design 'PeetsFEAdev_Design' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project PeetsFEAdev_Project Saved correctly
+        [info] Materials class has been initialized! Elapsed time: 0m 0sec
+-- Message Window --
+Stopping Batch Run: 1:03:09 PM  Jul 01, 2025
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:23:50
+Location: C:\Program Files\AnsysEM\v242\Win64\ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 1:03:52 PM  Jul 01, 2025
+Running as user : DESKTOP-L5CB36B\5600X2
+Temp directory: C:\Users\5600X2\AppData\Local\Temp
+Project directory: C:\Users\5600X2\Documents\Ansoft
+-- Message Window --
+      *Global - Messages
+        [info] GRPC server running on port: 64895. 
+        [info] Project tmp has been created.
+        [info] Added design 'PeetsFEAdev_Design' of type Maxwell 3D.
+        [info] Aedt Objects correctly read
+        [info] Modeler class has been initialized! Elapsed time: 0m 0sec
+        [info] Project tmp Saved correctly
+        [info] Project PeetsFEAdev_Project Saved correctly
+        [info] Materials class has been initialized! Elapsed time: 0m 0sec
+-- Message Window --
+Stopping Batch Run: 1:04:29 PM  Jul 01, 2025
