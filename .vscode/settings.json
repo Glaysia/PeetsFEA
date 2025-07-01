@@ -17,7 +17,7 @@
     "--ignore", "E121"      // 4칸 규칙 경고 억제(선택)
   ],
   "python.analysis.autoImportCompletions": false,
-  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.typeCheckingMode": "standard",
   "python.languageServer": "Pylance",
   "editor.inlayHints.enabled": "on",
   "python.analysis.inlayHints.variableTypes": true,
