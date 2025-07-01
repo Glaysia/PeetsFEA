@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Sequence, cast
+from typing import Any, Literal, Sequence, cast
 
 # from Coil import Coil
 # from Peets import CoilDesignParam
@@ -66,30 +66,62 @@ class PeetsLogSetter:
 
 
 class MyMaxwell3d(Maxwell3d):
-  def __init__(self, *args, **kargs) -> None:  # type: ignore
-    super().__init__(*args, **kargs)  # type: ignore
+  def __init__(self, *args, **kargs) -> None:
+    super().__init__(*args, **kargs)
 
-    orig_create_box = self.modeler.create_box  # type: ignore
-    orig_create_polyline = self.modeler.create_polyline  # type: ignore
+    if self.materials == None:
+      raise RuntimeError("Materials class is not initialized!")
 
-    def create_box_with_error(*args, **kwargs) -> Object3d:  # type: ignore
+    if self.modeler == None:
+      raise RuntimeError("Modeler class is not initialized!")
+
+    from ansys.aedt.core.modeler.modeler_2d import Modeler2D
+
+    if isinstance(self.modeler, Modeler2D):
+      raise RuntimeError("Modeler2D class can not be used here!")
+
+    orig_create_box = self.modeler.create_box
+    orig_create_polyline = self.modeler.create_polyline
+    orig_duplicat_material = self.materials.duplicate_material
+
+    from ansys.aedt.core.modeler.cad.elements_3d import Point, Plane
+
+    def create_box_with_error(*args, **kwargs) -> Point | Plane | Object3d:
         # 실제 박스 생성 시도
-      result: Object3d = orig_create_box(*args, **kwargs)  # type: ignore
+      result: Point | Plane | Object3d | Literal[False] = orig_create_box(
+        *args, **kwargs)
+
       if not result:
           # 실패했으면 명확한 예외
-        raise RuntimeError("create_box() failed: returned falsy value")
-      return result  # type: ignore
+        raise RuntimeError(
+          "[PeetsFEA] create_box() failed: returned falsy value")
+      return result
 
-    def create_polyline_with_error(*args, **kwargs) -> Object3d:  # type: ignore
+    from ansys.aedt.core.modeler.cad.polylines import Polyline
+
+    def create_polyline_with_error(*args, **kwargs) -> Polyline:
         # 실제 폴리라인 생성 시도
-      result: Object3d = orig_create_polyline(*args, **kwargs)  # type: ignore
+      result: Object3d = orig_create_polyline(*args, **kwargs)
       if not result:
           # 실패했으면 명확한 예외
-        raise RuntimeError("create_polyline() failed: returned falsy value")
-      return result  # type: ignore
+        raise RuntimeError(
+          "[PeetsFEA] create_polyline() failed: returned falsy value")
 
-    self.modeler.create_box = create_box_with_error  # type: ignore
-    self.modeler.create_polyline = create_polyline_with_error  # type: ignore
+      return result
+
+    def duplicate_material_with_error(*args, **kwargs) -> Material:
+
+      result: Material | Literal[False] = orig_duplicat_material(
+        *args, **kwargs)
+      if not result:
+        raise RuntimeError(
+          "[PeetsFEA] duplicate_material() failed: returned falsy value")
+
+      return result
+
+    self.modeler.create_box = create_box_with_error
+    self.modeler.create_polyline = create_polyline_with_error
+    self.materials.duplicate_material = duplicate_material_with_error
 
 
 class AedtHandler:
