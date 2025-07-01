@@ -2,37 +2,34 @@
 import setuptools
 from pathlib import Path
 
-# README.md 를 long_description 으로 쓰려면
 this_dir = Path(__file__).parent
 long_description = (this_dir / "README.md").read_text(encoding="utf-8")
 
 setuptools.setup(
-  name="PeetsFEA",                                      # PyPI에 올릴 때 사용할 패키지 이름
-  version="0.0.1",                                      # 배포 버전
-  author="Glaysia",                                     # 작성자 이름
-  author_email="willbecat27@gmail.com",                 # 작성자 이메일
-  description="전력전자 자동화에 필요한 유틸리티 모듈 모음",  # 한줄 설명
-  long_description=long_description,                    # README.md 전체를 설명으로 사용
-  long_description_content_type="text/markdown",        # README.md 포맷
-  url="https://github.com/Glaysia/PeetsFEA",            # 프로젝트 URL
-  packages=setuptools.find_packages(
-    packages=["peetsfea"],
-    package_dir={"peetsfea": "peetsfea"},
-    install_requires=[...],
-    python_requires=">=3.10",                          # 지원하는 Python 버전
-    install_requires=[                                 # pip install 시 자동으로 설치할 의존 패키지
-      # Windows only
-      "pyaedt==0.17.4; sys_platform=='win32'",
+    name="PeetsFEA",                                      # PyPI package name
+    version="0.0.1",                                      # release version
+    author="Glaysia",                                     # author name
+    author_email="willbecat27@gmail.com",                 # author email
+    description="전력전자 자동화에 필요한 유틸리티 모듈 모음",  # short description
+    long_description=long_description,                    # README.md as long description
+    long_description_content_type="text/markdown",        # format of long_description
+    url="https://github.com/Glaysia/PeetsFEA",            # project URL
 
-      # Linux only
-      "pyaedt==0.17.4; sys_platform=='linux'"
+    packages=setuptools.find_packages(),                  # only package discovery here
+    package_dir={"peetsfea": "peetsfea"},                 # map package name to folder
 
+    python_requires=">=3.10",                             # supported Python versions
+    install_requires=[                                    # dependencies with platform markers
+        "pyaedt==0.17.4; sys_platform=='win32'",
+        "duckdb==1.3.1; sys_platform=='win32'",
+        "pyaedt==0.17.4; sys_platform=='linux'",
+        "duckdb==1.3.1; sys_platform=='linux'",
     ],
-    classifiers=[                                     # PyPI 메타데이터
-      "Programming Language :: Python :: 3",
-      "Operating System :: Microsoft :: Windows",
-      "Operating System :: POSIX :: Linux",
+
+    classifiers=[                                         # PyPI metadata
+        "Programming Language :: Python :: 3",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
     ],
-    include_package_data=True,                        # MANIFEST.in 에 추가한 리소스도 포함
-  )
+    include_package_data=True,                            # include files from MANIFEST.in
 )

@@ -317,8 +317,8 @@ class AedtHandler:
     cls.logger.log(logging.INFO, f"[PeetsFEA] {msg}")
 
 
-AedtHandler()
 if __name__ == '__main__':
+  AedtHandler()
 
   AedtHandler.initialize(
     project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
