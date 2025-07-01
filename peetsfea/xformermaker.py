@@ -182,7 +182,7 @@ class XformerMakerInterface(ABC):
     # print(f"[PeetsFEA] DEBUG:{self.mat.permeability.value}")  # type: ignore
 
   @abstractmethod
-  def set_variable(self) -> None:
+  def set_variable(self, input_ranges: None | dict[str, tuple[float, float, float, int]]) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   @abstractmethod
@@ -208,6 +208,58 @@ class XformerMakerInterface(ABC):
 
     return polyline_obj
 
+  def _create_box(self, origin, sizes, name=None, material=None, *args, **kwargs) -> Object3d:
+    """Create a box.
+
+      Parameters
+      ----------
+      origin : list
+          Anchor point for the box in Cartesian``[x, y, z]`` coordinates.
+      sizes : list
+          Length of the box edges in Cartesian``[x, y, z]`` coordinates.
+      name : str, optional
+          Name of the box. The default is ``None``, in which case the
+          default name is assigned.
+      material : str, optional
+          Name of the material.  The default is ``None``, in which case the
+          default material is assigned. If the material name supplied is
+          invalid, the default material is assigned.
+
+      Returns
+      -------
+      :class:`ansys.aedt.core.modeler.cad.object_3d.Object3d` or bool
+          3D object or ``False`` if it fails.
+
+      References
+      ----------
+      >>> oEditor.CreateBox
+
+      Examples
+      --------
+      This example shows how to create a box in HFSS.
+      The required parameters are ``position`` that provides the origin of the
+      box and ``dimensions_list`` that provide the box sizes.
+      The optional parameter ``material`` allows you to set the material name of the box.
+      The optional parameter ``name`` allows you to assign a name to the box.
+
+      This method applies to all 3D applications: HFSS, Q3D, Icepak, Maxwell 3D, and
+      Mechanical.
+
+      >>> from ansys.aedt.core import hfss
+      >>> hfss = Hfss()
+      >>> origin = [0, 0, 0]
+      >>> dimensions = [10, 5, 20]
+      >>> box_object = hfss.modeler.create_box(origin=origin, sizes=dimensions, name="mybox", material="copper")
+
+      """
+    ret: Point | Plane | Object3d | Literal[False] = self.modeler.create_box(
+      origin, sizes, name, material, *args, **kwargs, **kwargs)
+    if not isinstance(ret, Object3d):
+      raise RuntimeError(
+        f"[PeetsFEA] create_box failed: expected Object3d, got {type(ret).__name__}")
+
+    return ret
+
   def create_region(self) -> None:
 
     region: Point | Plane | Object3d | Literal[False] = self.modeler.create_air_region(
@@ -231,6 +283,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     super().__init__(name, aedt_dir, des_aedt_pid)
 
     self.v: dict[str, float] = {}
+    self.o3ds: dict[str, Object3d] = {}
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
@@ -280,8 +333,12 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     ranges["Rx_width"] = [4, 20, 0.1, 1]
     return ranges
 
-  def set_variable(self) -> None:
-    r: dict[str, tuple[float, float, float, int]] = self.random_ranges()
+  def set_variable(self, input_ranges: None | dict[str, tuple[float, float, float, int]]) -> None:
+
+    if input_ranges == None:
+      r: dict[str, tuple[float, float, float, int]] = self.random_ranges()
+    else:
+      r = input_ranges
 
     for i in self.template[self.xformer_type]["coil_keys"]:
       self.v[i] = self._random_choice(r[i])
@@ -318,9 +375,71 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       else:
         break
 
-  def create_core(self) -> None:
-    pass
+    for k, v in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{v}mm"
 
+  def create_core(self) -> None:
+    if not hasattr(self, "mat"):
+      raise RuntimeError("set_material() must be called before create_core()")
+    origin: Sequence[str] = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2",
+                             "-(w1)/2", "-(2*l1_top+h1)/2"]
+    dimension: Sequence[str] = [
+      "(2*l1_leg+2*l2+2*l2_tap+l1_center)", "(w1)", "(2*l1_top+h1)"]
+    self.o3ds["core_base"] = self._create_box(
+      origin=origin,
+      sizes=dimension,
+      name="core",
+      material=self.mat
+    )
+
+    origin = ["l1_center/2", "-(w1)/2", "-(h1)/2"]
+    dimension = ["l2+l2_tap", "w1", "h1"]
+    self.o3ds["core_sub1"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_sub1",
+        material="ferrite"
+    )
+
+    origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
+    dimension = ["-(l2+l2_tap)", "w1", "h1"]
+    self.o3ds["core_sub2"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_sub2",
+        material="ferrite"
+    )
+
+    origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
+    dimension = ["l1_center", "w1", "h1"]
+    self.o3ds["core_sub3"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_sub3",
+        material="ferrite"
+    )
+
+    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"]
+    dimension = ["(l1_leg)", "(w1)", "(g1)"]
+    self.o3ds["core_sub_g1"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_sub_g1",
+        material=self.mat
+    )
+
+    # origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"]
+    # dimension = ["-(l1_leg)", "(w1)", "(g1)"]
+    # self.o3ds["core_sub_g2"] = self._create_box(
+    #     origin=origin,
+    #     sizes=dimension,
+    #     name="core_sub_g2",
+    #     material=self.mat
+    #   )
+
+    # origin = ["-l1_center/2", "-(w1)/2*w1_ratio", "-(h1)/2"]
+    # dimension = ["l1_center", "w1*w1_ratio", "h1"]
+    # self.o3ds["core_unite1"] =
   def create_winding(self) -> None:
     pass
 
@@ -344,9 +463,13 @@ if __name__ == "__main__":
 
   sim = Project1_EE_Plana_Plana_2Series(
     name=name, aedt_dir=aedt_dir, des_aedt_pid=1)
+  sim.set_variable(None)
+  sim.set_material()
+  sim.create_core()
+  # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
   #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
   #   design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   # )
-  AedtHandler.peets_aedt.close_desktop()
+  # AedtHandler.peets_aedt.close_desktop()
