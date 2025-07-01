@@ -65,14 +65,15 @@ class XformerEntry(TypedDict):
 
 
 class XformerMakerInterface(ABC):
-  def __init__(self, name: str, aedt_dir: str) -> None:
+  def __init__(self, name: str, aedt_dir: str, des_aedt_pid: int) -> None:
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
 
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
-      design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
+      design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,
+      des_aedt_pid=des_aedt_pid
     )
 
     if not isinstance(AedtHandler.peets_m3d.modeler, Modeler3D):
@@ -226,8 +227,9 @@ class XformerMakerInterface(ABC):
 
 
 class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
-  def __init__(self, name: str, aedt_dir: str) -> None:
-    super().__init__(name, aedt_dir)
+  def __init__(self, name: str, aedt_dir: str, des_aedt_pid: int) -> None:
+    super().__init__(name, aedt_dir, des_aedt_pid)
+
     self.v: dict[str, float] = {}
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
@@ -339,9 +341,9 @@ if __name__ == "__main__":
     parr_idx: str = str(sys.argv[0])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
-  sim = Project1_EE_Plana_Plana_2Series(name=name, aedt_dir=aedt_dir)
 
-  print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
+  sim = Project1_EE_Plana_Plana_2Series(
+    name=name, aedt_dir=aedt_dir, des_aedt_pid=1)
   # x.set_material()
   # AedtHandler.initialize(
   #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),

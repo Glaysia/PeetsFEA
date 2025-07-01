@@ -115,14 +115,23 @@ class AedtHandler:
       return pid
 
   @classmethod
-  def open_aedt(cls) -> int:
+  def open_aedt(cls, aedt_pid=None) -> int:
     """
     *주의 만약 여러개가 켜져있다면 하나의 aedt를 빼고 모두 종료합니다.
     peets의 aedt의 pid를 반환합니다.
+    pid를 입력받으면 종료하지 않고 해당 pid의 aedt로 부착됩니다.
     """
+
     pids: Sequence[int] = cls.get_aedt_pids()
     if len(pids) > 0:
-      cls.peets_aedt_pid = pids[0]
+      cls.peets_aedt_pid = aedt_pid if aedt_pid else pids[0]
+      if not (aedt_pid in pids):
+        aedt = Desktop(
+            non_graphical=False, new_desktop=True,
+            close_on_exit=False, student_version=False)
+        cls.peets_aedt = aedt
+        return aedt.aedt_process_id
+
       for pid in pids:
         with PeetsLogSetter(pid):
           if pid == cls.peets_aedt_pid:
@@ -130,10 +139,10 @@ class AedtHandler:
               non_graphical=False, new_desktop=False,
               close_on_exit=False, student_version=False, aedt_process_id=pid)
             cls.peets_aedt = aedt
-            PeetsLogSetter(pid).setlogger(pid)
             return pid
           else:
-            Desktop(new_desktop=False, aedt_process_id=pid).close_desktop()
+            # Desktop(new_desktop=False, aedt_process_id=pid).close_desktop()
+            pass
       return cls.peets_aedt_pid
     else:
       aedt = Desktop(
@@ -258,6 +267,7 @@ class AedtHandler:
     project_path: Path = Path.home().joinpath("peets_aipd").absolute(),
     design_name: str = "AIPDDesign",
     sol_type: str = SOLUTIONS.Maxwell3d.EddyCurrent,
+    des_aedt_pid: int = 0
   ) -> None:
     """
     aedt를 초기화 합니다.
@@ -305,6 +315,7 @@ if __name__ == '__main__':
     design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   )
   AedtHandler.peets_aedt.close_desktop()
+  AedtHandler.close_all_aedt()
   # c1 = Coil()
   # coil_shape: dict[str, float] = {k: 1.0 for k in Coil.get_template()[
   #     CoilTypeEnum.EIPlanaPlana2Series]["coil_keys"]}
