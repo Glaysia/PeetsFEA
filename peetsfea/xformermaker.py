@@ -50,7 +50,7 @@ class XformerEntry(TypedDict):
   coil_keys: tuple[str, ...]
 
 
-class XformerMakerInterface:
+class XformerMakerInterface(ABC):
   def __init__(self, name: str, aedt_dir: str) -> None:
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
 
@@ -145,28 +145,27 @@ class XformerMakerInterface:
     return self._coil_types_template
 
   def set_material(self) -> None:
-    pass
-
+  @abstractmethod
   def set_variable(self) -> None:
-    pass
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
+  @abstractmethod
   def create_core(self) -> None:
-    pass
-
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
+  @abstractmethod
   def create_winding(self) -> None:
-    pass
-
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
+  @abstractmethod
   def create_exctation(self) -> None:
-    pass
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   def _create_polyline(self, points, name, coil_width, coil_height) -> None:
     pass
 
   def create_region(self) -> None:
-    pass
-
+  @abstractmethod
   def assign_mesh(self) -> None:
-    pass
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   # def
 
