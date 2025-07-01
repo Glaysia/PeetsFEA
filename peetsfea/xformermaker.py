@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Any, Literal, Sequence, TypedDict
 from abc import ABC, abstractmethod
 
@@ -224,6 +225,110 @@ class XformerMakerInterface(ABC):
   # def
 
 
+class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
+  def __init__(self, name: str, aedt_dir: str) -> None:
+    super().__init__(name, aedt_dir)
+    self.v: dict[str, float] = {}
+    self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
+    self.per: int = 3000
+    self.freq_khz: int = 140
+
+  def random_ranges(self) -> dict[str, tuple[float, float, float, int]]:
+    ranges = {}
+
+    ranges["w1"] = [20, 200, 1, 0]
+    ranges["l1_leg"] = [2, 10, 0.1, 1]
+    ranges["l1_top"] = [0.5, 2, 0.1, 1]
+    ranges["l2"] = [5, 20, 0.1, 1]  # under, upper, resolution
+
+    ranges["h1"] = [0.1, 2, 0.01, 2]
+    ranges["ratio"] = [0.5, 0.98, 0.01, 2]
+
+    ranges["Tx_turns"] = [14, 14, 1, 0]
+
+    ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
+    ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
+
+    ranges["Rx_space_y"] = [0.1, 1, 0.1, 1]
+    ranges["Rx_preg"] = [0.01, 0.2, 0.01, 2]
+
+    ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
+    ranges["Rx_space_x"] = [0.05, 1, 0.01, 2]
+
+    ranges["g1"] = [0, 0, 0.01, 2]
+    ranges["g2"] = [0, 0.5, 0.01, 2]
+
+    ranges["l1_center"] = [1, 20, 1, 0]
+    ranges["l2_tap"] = [0, 0, 1, 0]
+
+    ranges["Tx_space_x"] = [0.1, 5, 0.1, 1]
+    ranges["Tx_space_y"] = [0.1, 5, 0.1, 1]
+    ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
+    ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
+
+    ranges["core_N_w1"] = [0, 30, 1, 0]
+    ranges["core_P_w1"] = [0, 30, 1, 0]
+
+    ranges["Tx_layer_space_x"] = [0.1, 5, 0.1, 1]
+    ranges["Tx_layer_space_y"] = [0.1, 5, 0.1, 1]
+    ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
+    ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
+
+    ranges["Tx_width"] = [0.5, 3, 0.1, 1]
+    ranges["Rx_width"] = [4, 20, 0.1, 1]
+    return ranges
+
+  def set_variable(self) -> None:
+    r: dict[str, tuple[float, float, float, int]] = self.random_ranges()
+
+    for i in self.template[self.xformer_type]["coil_keys"]:
+      self.v[i] = self._random_choice(r[i])
+
+    Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
+                 ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
+    Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
+                 (self.v["Rx_width"] + self.v["Rx_space_y"]))
+
+    # 겹쳐서 잘못되는 경우 제외
+    while (True):
+      if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
+        self.v["Tx_height"] = self._random_choice(r["Tx_height"])
+        self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
+        self.v["Rx_height"] = self._random_choice(r["Rx_height"])
+        self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
+        self.v["h1"] = self._random_choice(r["h1"])
+
+      elif Tx_max >= self.v["l2"] + self.v["l2_tap"]:
+        self.v["Tx_layer_space_x"] = self._random_choice(r["Tx_layer_space_x"])
+        self.v["Tx_layer_space_y"] = self._random_choice(r["Tx_layer_space_y"])
+        self.v["Tx_width"] = self._random_choice(r["Tx_width"])
+        self.v["l2"] = self._random_choice(r["l2"])
+        Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
+                     ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
+
+      elif Rx_max >= self.v["l2"] + self.v["l2_tap"]:
+        self.v["Rx_layer_space_x"] = self._random_choice(
+          r["Rx_layer_space_x"])
+        self.v["Rx_width"] = self._random_choice(r["Rx_width"])
+        Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
+                     (self.v["Rx_width"] + self.v["Rx_space_y"]))
+
+      else:
+        break
+
+  def create_core(self) -> None:
+    pass
+
+  def create_winding(self) -> None:
+    pass
+
+  def create_exctation(self) -> None:
+    pass
+
+  def assign_mesh(self) -> None:
+    pass
+
+
 if __name__ == "__main__":
 
   # print(sys.argv)
@@ -234,11 +339,12 @@ if __name__ == "__main__":
     parr_idx: str = str(sys.argv[0])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
-  x = XformerMakerInterface(name=name, aedt_dir=aedt_dir)
+  sim = Project1_EE_Plana_Plana_2Series(name=name, aedt_dir=aedt_dir)
 
-  x.set_material()
+  print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
+  # x.set_material()
   # AedtHandler.initialize(
   #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
   #   design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   # )
-  # AedtHandler.peets_aedt.close_desktop()
+  AedtHandler.peets_aedt.close_desktop()

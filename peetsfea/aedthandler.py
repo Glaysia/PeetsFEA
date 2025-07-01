@@ -175,7 +175,7 @@ class AedtHandler:
     cls.oproj: AedtPropServer = cls.peets_aedt.active_project()  # type: ignore
 
     try:
-      cls.peets_m3d = MyMaxwell3d(
+      cls.peets_m3d = Maxwell3d(
         project=cls.project_name,
         design=cls.design_name,
         solution_type=cls.solution_type,
