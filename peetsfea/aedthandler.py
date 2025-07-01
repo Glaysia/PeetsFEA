@@ -233,7 +233,7 @@ class AedtHandler:
       if proj != cls.oproj.GetName():  # type: ignore
         i += int(cls.peets_m3d.delete_project(proj))  # type: ignore
 
-    print(f"{i} 개의 프로젝트를 지웠습니다.")
+    cls.log(f"{i} 개의 프로젝트를 지웠습니다.", True)
 
   @classmethod
   def reset_project(cls) -> None:
@@ -250,7 +250,7 @@ class AedtHandler:
       if desi != cls.design_name:
         i += int(cls.peets_m3d.delete_design(desi))  # type: ignore
 
-    print(f"{i} 개의 디자인을 지웠습니다.")
+    cls.log(f"{i} 개의 디자인을 지웠습니다.", True)
 
   @classmethod
   def initialize(
@@ -270,8 +270,9 @@ class AedtHandler:
     # print(dir(AedtHandler))
     cls.tmp = cls.project_name
     cls.project_name = "tmp"
-    cls.open_aedt()
-
+    cls.open_aedt(None if des_aedt_pid == 0 else des_aedt_pid)
+    pid: int = cls.get_aedt_pid()
+    PeetsLogSetter(pid).setlogger(pid)
     print(f"프로젝트 저장 여부:{cls.open_project()}")
     cls.reset_desktop()
 
@@ -288,9 +289,10 @@ class AedtHandler:
   #   cls.input_coil: CoilDesignParam = input_coil
 
   @classmethod
-  def log(cls, msg: str) -> None:
-    cls.peets_aedt._odesktop.AddMessage(  # type: ignore
-      cls.project_name, cls.design_name, 0, f"[PeetsFEA] {msg}")
+  def log(cls, msg: str, initializing=False) -> None:
+    if not initializing:
+      cls.peets_aedt._odesktop.AddMessage(  # type: ignore
+        cls.project_name, cls.design_name, 0, f"[PeetsFEA] {msg}")
 
     cls.logger.log(logging.INFO, f"[PeetsFEA] {msg}")
 
