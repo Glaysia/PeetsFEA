@@ -556,7 +556,47 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     AedtHandler.log("Core 생성 완료")
 
   def create_winding(self) -> None:
-    pass
+    self.points = [
+      ["(w1*w1_ratio/2 + core_P_w1 + 40mm)",
+       "-(w1/2 + g1 + Rx_width/2)", "0mm"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "-(w1/2 + g1 + Rx_width/2)", "0mm"],
+      ["-(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "-(w1/2 + g1 + Rx_width/2)", "0mm"],
+      ["-(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "(w1/2 + g1 + Rx_width/2)", "0mm"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "(w1/2 + g1 + Rx_width/2)", "0mm"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)", "0", "0mm"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "0", "-(Rx_height+Rx_preg)"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "-(w1/2 + g1 + Rx_width/2)", "-(Rx_height+Rx_preg)"],
+      ["-(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "-(w1/2 + g1 + Rx_width/2)", "-(Rx_height+Rx_preg)"],
+      ["-(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "(w1/2 + g1 + Rx_width/2)", "-(Rx_height+Rx_preg)"],
+      ["(w1*w1_ratio/2 + Rx_space_x + Rx_width/2)",
+       "(w1/2 + g1 + Rx_width/2)", "-(Rx_height+Rx_preg)"],
+      ["(w1*w1_ratio/2 + core_P_w1 + 40mm)",
+       "(w1/2 + g1 + Rx_width/2)", "-(Rx_height+Rx_preg)"]
+    ]
+    o3ds = self.o3ds
+
+    o3ds["RX_1"] = self._create_polyline(
+      points=self.points, name=f"Rx_1", coil_width="Rx_width", coil_height="Rx_height")
+    self.modeler.mirror(
+      assignment=self.o3ds["RX_1"],
+      origin=[0, 0, 0],
+      vector=[1, 0, 0]
+    )
+    Rx_1_move = ["0mm", "0mm",
+                 "(Tx_preg+Tx_height+Rx_preg+Rx_height/2+Rx_preg+Rx_height)"]
+    self.modeler.move(
+      assignment=o3ds["RX_1"],
+      vector=Rx_1_move
+    )
+
 
   def create_exctation(self) -> None:
     pass
@@ -647,7 +687,7 @@ if __name__ == "__main__":
   values["l1_center"] = map(itemgetter("l1_center"), ccore)
 
   ranges["l2_tap"] = [0, 0, 1, 0]
-  ranges["ratio"] = [0.5, 0.98, 0.01, 2]
+  ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
   ranges["Tx_turns"] = [14, 14, 1, 0]
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
@@ -656,9 +696,8 @@ if __name__ == "__main__":
 
   ranges["Rx_preg"] = [0.01, 0.2, 0.01, 2]
   ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
-  ranges["Rx_space_x"] = [0.05, 1, 0.01, 2]
 
-  ranges["g1"] = [0, 0, 0.01, 2]
+  ranges["g1"] = [0.1, 0.1, 0.01, 2]
   ranges["g2"] = [0, 0.5, 0.01, 2]
 
   ranges["Tx_space_x"] = [0.1, 5, 0.1, 1]
@@ -675,13 +714,14 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
   ranges["Tx_width"] = [0.5, 3, 0.1, 1]
-  ranges["Rx_width"] = [4, 20, 0.1, 1]
+  ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
   sim.set_variable_byrange(input_ranges=ranges)
   sim.set_material()
   sim.validate_variable()
   sim.create_core()
+  sim.create_winding()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
