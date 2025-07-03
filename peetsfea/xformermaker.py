@@ -69,6 +69,7 @@ class XformerMakerInterface(ABC):
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
+    self.is_validated: bool = False
 
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
@@ -189,7 +190,7 @@ class XformerMakerInterface(ABC):
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   @abstractmethod
-  def set_variable(self, input_ranges: None | dict[str, tuple[float, float, float, int]]) -> None:
+  def validate_variable(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   @abstractmethod
@@ -376,13 +377,20 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
 
+  def validate_variable(self) -> None:
+    r = self.r
+
     Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
                  ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
     Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
                  (self.v["Rx_width"] + self.v["Rx_space_y"]))
 
-    # 겹쳐서 잘못되는 경우 제외
+    start = time.monotonic()  # 시작 시각 기록
+    timeout_sec = 5
     while (True):
+      if time.monotonic() - start > timeout_sec:
+        raise RuntimeError(
+            f"validate_variable() timed out after {timeout_sec} seconds")
       if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
         self.v["Tx_height"] = self._random_choice(r["Tx_height"])
         self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
@@ -391,8 +399,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         self.v["h1"] = self._random_choice(r["h1"])
 
       elif Tx_max >= self.v["l2"] + self.v["l2_tap"]:
-        self.v["Tx_layer_space_x"] = self._random_choice(r["Tx_layer_space_x"])
-        self.v["Tx_layer_space_y"] = self._random_choice(r["Tx_layer_space_y"])
+        self.v["Tx_layer_space_x"] = self._random_choice(
+            r["Tx_layer_space_x"])
+        self.v["Tx_layer_space_y"] = self._random_choice(
+            r["Tx_layer_space_y"])
         self.v["Tx_width"] = self._random_choice(r["Tx_width"])
         self.v["l2"] = self._random_choice(r["l2"])
         Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
@@ -400,7 +410,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
       elif Rx_max >= self.v["l2"] + self.v["l2_tap"]:
         self.v["Rx_layer_space_x"] = self._random_choice(
-          r["Rx_layer_space_x"])
+            r["Rx_layer_space_x"])
         self.v["Rx_width"] = self._random_choice(r["Rx_width"])
         Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
                      (self.v["Rx_width"] + self.v["Rx_space_y"]))
@@ -408,12 +418,17 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       else:
         break
 
-    for k, v in self.v.items():
-      AedtHandler.peets_m3d[k] = f"{v}mm"
+    del self.r
+    self.is_validated = True
 
   def create_core(self) -> None:
     if not hasattr(self, "mat"):
       raise RuntimeError("set_material() must be called before create_core()")
+
+    if not self.is_validated:
+      raise RuntimeError(
+        "validate_variable() must be called before validate_variable()")
+
     origin: Sequence[str] = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2",
                              "-(w1)/2", "-(2*l1_top+h1)/2"]
     dimension: Sequence[str] = [
