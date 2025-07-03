@@ -1,7 +1,9 @@
+from operator import itemgetter
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import Any, Literal, Sequence, TypedDict
+import time
+from typing import Any, Iterator, Literal, Sequence, TypedDict
 from abc import ABC, abstractmethod
 
 from ansys.aedt.core.maxwell import Maxwell3d
@@ -291,6 +293,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     super().__init__(name, aedt_dir, des_aedt_pid)
 
     self.v: dict[str, float] = {}
+    self.comments: list[str] = []
     self.o3ds: dict[str, Object3d] = {}
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
@@ -367,7 +370,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     else:
       r = input_ranges
 
-    for i in self.template[self.xformer_type]["coil_keys"]:
+    for i in r.keys():
       self.v[i] = self._random_choice(r[i])
 
     self.r.update(r)
@@ -458,17 +461,18 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         material="ferrite"
     )
 
-    origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
-    dimension = ["l1_center", "w1", "h1"]
-    self.o3ds["core_sub3"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_sub3",
-        material="ferrite"
-    )
+    # origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
+    # dimension = ["l1_center", "w1", "g1"]
+    # self.o3ds["core_sub3"] = self._create_box(
+    #     origin=origin,
+    #     sizes=dimension,
+    #     name="core_sub3",
+    #     material="ferrite"
+    # )
 
-    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"]
-    dimension = ["(l1_leg)", "(w1)", "(g1)"]
+    # origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"] # EI에 유용할듯
+    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
+    dimension = ["(l1_leg)", "(w1)", "(g2)"]
     self.o3ds["core_sub_g1"] = self._create_box(
         origin=origin,
         sizes=dimension,
@@ -476,18 +480,60 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         material=self.mat
     )
 
-    # origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"]
-    # dimension = ["-(l1_leg)", "(w1)", "(g1)"]
-    # self.o3ds["core_sub_g2"] = self._create_box(
+    origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
+    dimension = ["-(l1_leg)", "(w1)", "(g2)"]
+    self.o3ds["core_sub_g2"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_sub_g2",
+        material=self.mat
+      )
+
+    # origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"] # 나중에 과제용으로 가운데 일자가 아니게 할 때 사용하자.
+    # dimension = ["l1_center", "w1", "h1"]
+    # self.o3ds["core_unite1"] = self._create_box(
     #     origin=origin,
     #     sizes=dimension,
-    #     name="core_sub_g2",
-    #     material=self.mat
-    #   )
+    #     name="core_unite1",
+    #     material="ferrite"
+    # )
 
-    # origin = ["-l1_center/2", "-(w1)/2*w1_ratio", "-(h1)/2"]
-    # dimension = ["l1_center", "w1*w1_ratio", "h1"]
-    # self.o3ds["core_unite1"] =
+    origin = ["-l1_center/2", "-(w1)/2", "-(g2)/2"]
+    dimension = ["l1_center", "w1", "g2"]
+    self.o3ds["core_unite_sub_g1"] = self._create_box(
+        origin=origin,
+        sizes=dimension,
+        name="core_unite_sub_g1",
+        material="ferrite"
+    )
+
+    # blank_list = [self.o3ds["core_unite1"].name] # 나중에 과제용으로 가운데 일자가 아니게 할 때 사용하자.
+    # tool_list = [self.o3ds["core_unite_sub_g1"].name]
+    # self.modeler.subtract(
+    #   blank_list=blank_list,
+    #   tool_list=tool_list,
+    #   keep_originals=True
+    # )
+
+    blank_list = [self.o3ds["core_base"].name]
+    tool_list = list(map(lambda x: self.o3ds[x].name, [
+      "core_sub1",
+      "core_sub2",
+      # "core_sub3",
+      "core_sub_g1",
+      "core_sub_g2",
+      "core_unite_sub_g1"
+    ]))
+    self.modeler.subtract(
+      blank_list=blank_list,
+      tool_list=tool_list,
+      keep_originals=False
+    )
+
+    self.o3ds["core_base"].transparency = 0.6
+
+    AedtHandler.log("Core 생성 완료")
+
   def create_winding(self) -> None:
     pass
 
