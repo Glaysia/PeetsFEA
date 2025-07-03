@@ -351,15 +351,20 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     else:
       r = input_values
 
+    values_N = 0
+    random_N = 0
     for i in r.keys():
       list_r = list(r[i])
-      values_N = len(list_r)
-      random_N = np.random.randint(values_N)
+      if values_N == 0:
+        values_N = len(list_r)
+        random_N = np.random.randint(values_N)
+
       _ = list_r[random_N]
       if type(_) == float:
         self.v[i] = _
       else:
         self.comments.append(str(_))
+        AedtHandler.log(f"상용코어 {_}로 선택됨.")
 
       self.r[i] = [_, _, 0.01, 2]
 
@@ -382,46 +387,62 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
   def validate_variable(self) -> None:
     r = self.r
-
+    v = self.v
     Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
                  ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
     Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
                  (self.v["Rx_width"] + self.v["Rx_space_y"]))
 
     start = time.monotonic()  # 시작 시각 기록
-    timeout_sec = 5
+    timeout_sec = 500
     while (True):
+      AedtHandler.log(str(self.v))
       if time.monotonic() - start > timeout_sec:
+        self.is_validated = True
+        self.create_core()
         raise RuntimeError(
-            f"validate_variable() timed out after {timeout_sec} seconds")
-      if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
-        self.v["Tx_height"] = self._random_choice(r["Tx_height"])
-        self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
-        self.v["Rx_height"] = self._random_choice(r["Rx_height"])
-        self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
-        self.v["h1"] = self._random_choice(r["h1"])
+            f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
+      # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
+      #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
+      #   self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
+      #   self.v["Rx_height"] = self._random_choice(r["Rx_height"])
+      #   self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
+      #   self.v["h1"] = self._random_choice(r["h1"])
+      if v["Rx_width"] > v["l2"]:
+        v["Rx_width"] = self._random_choice(
+          r["Rx_width"]
+        )
+      elif (v["w1"] * float(AedtHandler.peets_m3d.get_evaluated_value("w1_ratio")) + 2 * v["Rx_space_x"]) < v["l1_center"]:
+        v["Rx_space_x"] = self._random_choice(
+          r["Rx_space_x"]
+        )
 
-      elif Tx_max >= self.v["l2"] + self.v["l2_tap"]:
-        self.v["Tx_layer_space_x"] = self._random_choice(
-            r["Tx_layer_space_x"])
-        self.v["Tx_layer_space_y"] = self._random_choice(
-            r["Tx_layer_space_y"])
-        self.v["Tx_width"] = self._random_choice(r["Tx_width"])
-        self.v["l2"] = self._random_choice(r["l2"])
-        Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
-                     ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
+        # elif Tx_max >= self.v["l2"] + self.v["l2_tap"]:
+        #   self.v["Tx_layer_space_x"] = self._random_choice(
+        #       r["Tx_layer_space_x"])
+        #   self.v["Tx_layer_space_y"] = self._random_choice(
+        #       r["Tx_layer_space_y"])
+        #   self.v["Tx_width"] = self._random_choice(r["Tx_width"])
+        #   self.v["l2"] = self._random_choice(r["l2"])
+        #   Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
+        #                ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
 
-      elif Rx_max >= self.v["l2"] + self.v["l2_tap"]:
-        self.v["Rx_layer_space_x"] = self._random_choice(
-            r["Rx_layer_space_x"])
-        self.v["Rx_width"] = self._random_choice(r["Rx_width"])
-        Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
-                     (self.v["Rx_width"] + self.v["Rx_space_y"]))
+        # elif Rx_max >= self.v["l2"] + self.v["l2_tap"]:
+        #   self.v["Rx_layer_space_x"] = self._random_choice(
+        #       r["Rx_layer_space_x"])
+        #   self.v["Rx_width"] = self._random_choice(r["Rx_width"])
+        #   Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
+        #                (self.v["Rx_width"] + self.v["Rx_space_y"]))
 
       else:
         break
 
     del self.r
+
+    for k, v in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{v}mm"
+
+    AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
     self.is_validated = True
 
   def create_core(self) -> None:
