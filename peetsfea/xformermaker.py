@@ -83,7 +83,7 @@ class XformerMakerInterface(ABC):
 
     assert self.modeler, "[PeetsFEA] modeler failed"
 
-  def _random_choice(self, X: tuple[float, float, float, int]) -> float:
+  def _random_choice(self, X: list[float]) -> float:
     """
     X[0]: 시작값 (inclusive)
     X[1]: 끝값 (inclusive)
@@ -93,7 +93,7 @@ class XformerMakerInterface(ABC):
     start, end, step, digits = X
     choices = np.arange(start, end + step, step)
     value = np.random.choice(choices)
-    return round(float(value), digits)
+    return round(float(value), int(digits))
 
   def set_params(self) -> None:
     pass
@@ -180,6 +180,13 @@ class XformerMakerInterface(ABC):
       points=self.bp_point, frequency=self.freq_khz * 1000)
 
     # print(f"[PeetsFEA] DEBUG:{self.mat.permeability.value}")  # type: ignore
+  @abstractmethod
+  def set_variable_byvalue(self, input_values: None | dict[str, Iterator[float | str]]) -> None:
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
+
+  @abstractmethod
+  def set_variable_byrange(self, input_ranges: None | dict[str, list[float]]) -> None:
+    raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   @abstractmethod
   def set_variable(self, input_ranges: None | dict[str, tuple[float, float, float, int]]) -> None:
@@ -288,7 +295,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     self.per: int = 3000
     self.freq_khz: int = 140
 
-  def random_ranges(self) -> dict[str, tuple[float, float, float, int]]:
+  def random_ranges(self) -> dict[str, list[float]]:
     ranges = {}
 
     ranges["w1"] = [20, 200, 1, 0]
@@ -333,15 +340,41 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     ranges["Rx_width"] = [4, 20, 0.1, 1]
     return ranges
 
-  def set_variable(self, input_ranges: None | dict[str, tuple[float, float, float, int]]) -> None:
+  def set_variable_byvalue(self, input_values: None | dict[str, Iterator[float | str]]) -> None:
+    self.r = {}
+    if input_values == None:
+      return
+    else:
+      r = input_values
+
+    for i in r.keys():
+      list_r = list(r[i])
+      values_N = len(list_r)
+      random_N = np.random.randint(values_N)
+      _ = list_r[random_N]
+      if type(_) == float:
+        self.v[i] = _
+      else:
+        self.comments.append(str(_))
+
+      self.r[i] = [_, _, 0.01, 2]
+
+  def set_variable_byrange(self, input_ranges: None | dict[str, list[float]]) -> None:
 
     if input_ranges == None:
-      r: dict[str, tuple[float, float, float, int]] = self.random_ranges()
+      r: dict[str, list[float]] = self.random_ranges()
     else:
       r = input_ranges
 
     for i in self.template[self.xformer_type]["coil_keys"]:
       self.v[i] = self._random_choice(r[i])
+
+    self.r.update(r)
+
+    for k, v in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{v}mm"
+
+    AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
 
     Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
                  ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
