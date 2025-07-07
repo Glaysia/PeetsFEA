@@ -423,9 +423,39 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
       turns = int(v["Tx_turns"])
       center = v["l1_center"]
-      Tx_total_width_x = ((turns // 2) + 1) * (v["Tx_space_x"]) / 2
-      Tx_total_width_y = ((turns // 2) + 1) * (v["Tx_space_y"]) / 2
+      Tx_total_width_x = ((turns // 2) + 2) * (v["Tx_space_x"]) / 2
+      Tx_total_width_y = ((turns // 2) + 2) * (v["Tx_space_y"]) / 2
       y = v["w1"] / 2 + Tx_total_width_y
+
+      A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
+      B = 2 * (v["l2"]) + v['l1_center']
+      C = v['l1_center']
+      D = v['h1'] * 0.5 + v['l1_top']
+      E = v['h1'] / 2
+      l1_leg = v["l1_leg"]
+      l1_top = v["l1_top"]
+      BpA = B / A
+      CpA = C / A
+      DpA = D / A
+      EpA = E / A
+      l1lpA = l1_leg / A
+      l1tpA = l1_top / A
+      w1pA = v['w1'] / A
+
+      B적당 = not (0.3 < BpA < 1)
+      C적당 = not (0.07 < CpA < 0.6)
+      D적당 = not (0.08 < DpA < 1.5)
+      E적당 = not (0.02 < EpA < 1.5)
+      l1_leg적당 = not (0.02 < l1lpA < 0.5)
+      l1_top적당 = not (0.02 < l1tpA < 0.5)
+      w1적당 = not (0.1 < w1pA < 3)
+      # 상용코어의 범위보다 훨씬 넓게 잡음
+      #             B/A       C/A       D/A       E/A  l1_leg/A  l1_top/A   w1/A
+      # min    0.664884  0.138699  0.159375  0.079687  0.069349  0.068493   0.237013
+      # max    0.861301  0.335116  0.780952  0.619048  0.167558  0.178744   0.793750
+
+      코어가_너무기형적이진_않은가 = any((B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당))
+      # 시뮬이 너무 오래 돌 것 같아서 제약조건 추가함
 
       # TX 불리언 변수들 :
       권선_시작_x좌표가_적당한가 = not (x < (center / 2 + v["l2"]))
@@ -437,6 +467,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       bool_list.append(권선_시작_x좌표가_적당한가)
       bool_list.append(권선_X_전체너비가_적당한가)
       bool_list.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
+      bool_list.append(코어가_너무기형적이진_않은가)
       # if v["Rx_width"] > v["l2"]:
       #   v["Rx_width"] = self._random_choice(
       #     r["Rx_width"]
@@ -448,10 +479,18 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       # else:
 
       if any(bool_list):
+        # TX코일이 코어에 들어는 가냐
         rand("Tx_space_x")
         rand("Tx_space_y")
         rand("Tx_width")
         rand("Tx_turns")
+
+        # 코어가 너무 기형적이진 않으냐
+        rand("l1_leg")
+        rand("l2")
+        rand("l1_center")
+        rand("h1")
+        rand("l1_top")
       else:
         break
 
@@ -874,18 +913,25 @@ if __name__ == "__main__":
   values: dict[str, Iterator[float | str]] = {}
   ranges: dict[str, list[float]] = {}
 
-  values["EXX"] = map(itemgetter("EXX"), ccore)
-  values["w1"] = map(itemgetter("w1"), ccore)
-  values["l1_leg"] = map(itemgetter("l1_leg"), ccore)
-  values["l1_top"] = map(itemgetter("l1_top"), ccore)
-  values["l2"] = map(itemgetter("l2"), ccore)
-  values["h1"] = map(itemgetter("h1"), ccore)
-  values["l1_center"] = map(itemgetter("l1_center"), ccore)
+  # values["EXX"] = map(itemgetter("EXX"), ccore)
+  # values["w1"] = map(itemgetter("w1"), ccore)
+  # values["l1_leg"] = map(itemgetter("l1_leg"), ccore)
+  # values["l1_top"] = map(itemgetter("l1_top"), ccore)
+  # values["l1_center"] = map(itemgetter("l1_center"), ccore)
+  # values["l2"] = map(itemgetter("l2"), ccore)
+  # values["h1"] = map(itemgetter("h1"), ccore)
+
+  ranges["w1"] = [2, 52, 40, 1]
+  ranges["l1_leg"] = [1, 12, 40, 3]
+  ranges["l1_top"] = [1, 12, 40, 3]
+  ranges["l1_center"] = [2, 25, 40, 3]
+  ranges["l2"] = [2, 25, 40, 3]
+  ranges["h1"] = [4, 52, 40, 2]
 
   ranges["l2_tap"] = [0, 0, 1, 0]
   ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["Tx_turns"] = [14, 14, 1, 0]
+  ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
   ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
   ranges["Rx_space_y"] = [0.1, 1, 0.1, 1]
@@ -896,8 +942,8 @@ if __name__ == "__main__":
   ranges["g1"] = [0.1, 0.1, 0.01, 2]
   ranges["g2"] = [0, 0.5, 0.01, 2]
 
-  ranges["Tx_space_x"] = [0.1, 7, 0.1, 1]
-  ranges["Tx_space_y"] = [0.1, 7, 0.1, 1]
+  ranges["Tx_space_x"] = [0.1, 7, 0.1, 1]  # rand TX
+  ranges["Tx_space_y"] = [0.1, 7, 0.1, 1]  # rand TX
   ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
 
@@ -909,7 +955,7 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_width"] = [0.1, 2, 0.01, 1]
+  ranges["Tx_width"] = [0.1, 2, 0.01, 1]  # rand TX
   ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
