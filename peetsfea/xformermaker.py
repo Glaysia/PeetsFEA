@@ -387,7 +387,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
   def validate_variable(self) -> None:
     r = self.r
-    v = self.v
+    v: dict[str, float] = self.v
     Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
                  ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
     Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
@@ -395,6 +395,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     start = time.monotonic()  # 시작 시각 기록
     timeout_sec = 500
+    w1_ratio = float(AedtHandler.peets_m3d.get_evaluated_value("w1_ratio"))
     while (True):
       AedtHandler.log(str(self.v))
       if time.monotonic() - start > timeout_sec:
@@ -408,39 +409,54 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       #   self.v["Rx_height"] = self._random_choice(r["Rx_height"])
       #   self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
       #   self.v["h1"] = self._random_choice(r["h1"])
+
+      def rand(key: str) -> None:
+        v[key] = self._random_choice(
+          r[key]
+        )
+
       if v["Rx_width"] > v["l2"]:
         v["Rx_width"] = self._random_choice(
           r["Rx_width"]
         )
-      elif (v["w1"] * float(AedtHandler.peets_m3d.get_evaluated_value("w1_ratio")) + 2 * v["Rx_space_x"]) < v["l1_center"]:
+      elif (v["w1"] * w1_ratio + 2 * v["Rx_space_x"]) < v["l1_center"]:
         v["Rx_space_x"] = self._random_choice(
           r["Rx_space_x"]
         )
-
-        # elif Tx_max >= self.v["l2"] + self.v["l2_tap"]:
-        #   self.v["Tx_layer_space_x"] = self._random_choice(
-        #       r["Tx_layer_space_x"])
-        #   self.v["Tx_layer_space_y"] = self._random_choice(
-        #       r["Tx_layer_space_y"])
-        #   self.v["Tx_width"] = self._random_choice(r["Tx_width"])
-        #   self.v["l2"] = self._random_choice(r["l2"])
-        #   Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
-        #                ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
-
-        # elif Rx_max >= self.v["l2"] + self.v["l2_tap"]:
-        #   self.v["Rx_layer_space_x"] = self._random_choice(
-        #       r["Rx_layer_space_x"])
-        #   self.v["Rx_width"] = self._random_choice(r["Rx_width"])
-        #   Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
-        #                (self.v["Rx_width"] + self.v["Rx_space_y"]))
-
       else:
-        break
+        x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
+        turns = v["Tx_turns"]
+        center = v["l1_center"]
+        # Tx_total_width_x = turns * (v["Tx_width"] + v["Tx_space_x"])
+        Tx_total_width_x = (turns / 2 + 1) * (v["Tx_space_x"]) / 2
+        Tx_total_width_y = (turns / 2 + 1) * (v["Tx_space_y"]) / 2
+
+        y = (v["w1"] / 2 + Tx_total_width_y)
+
+        권선_X_전체너비가_적당한가 = not (0.7 * v["l2"] < Tx_total_width_x < v["l2"])
+        권선_Y_전체너비가_적당한가 = not (0.7 * v["l2"] < Tx_total_width_y < v["l2"])
+        권선_자체의너비가_적당한가 = not ((turns / 2 + 1) *
+                              v["Tx_width"] < min(Tx_total_width_x, Tx_total_width_y))
+        if (x > (center / 2 + v["l2"])):
+          # 권선 시작 x좌표가 코일 안으로 들어가는지 여부
+          rand("Tx_space_x")
+          rand("Tx_width")
+        # elif (v["l2"] < Tx_total_width_x):
+        #   rand("Tx_space_x")
+        #   rand("Tx_width")
+        #   rand("Tx_turns")
+        elif (권선_X_전체너비가_적당한가 or 권선_Y_전체너비가_적당한가 or 권선_자체의너비가_적당한가):
+          rand("Tx_space_x")
+          rand("Tx_space_y")
+          rand("Tx_width")
+          rand("Tx_turns")
+        else:
+          break
 
     del self.r
 
-    for k, v in self.v.items():
-      AedtHandler.peets_m3d[k] = f"{v}mm"
+    for k, va in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{va}mm"
 
     AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
     self.is_validated = True
