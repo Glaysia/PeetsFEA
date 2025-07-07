@@ -631,8 +631,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
   def create_winding_TX(self):
     o3ds = self.o3ds
-    turns = self.v['Tx_turns']
-    half_turns = math.ceil(turns / 2)
+    turns = int(self.v['Tx_turns'])
 
     def from_expression(exp: str) -> float:  # 단위 무조건 mm
       m3d = AedtHandler.peets_m3d
@@ -641,7 +640,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     # Tx_total_width_y = turns * (v["Tx_width"] + v["Tx_space_y"])
     # y = (v["w1"] / 2 + Tx_total_width_y)
-    total_width = (turns / 2 + 1) * \
+    total_width = (turns // 2 + 1) * \
         from_expression("Tx_space_y") / 2
     self.points_Tx = [
       ["(w1*w1_ratio/2 + core_P_w1 + 40mm)",
