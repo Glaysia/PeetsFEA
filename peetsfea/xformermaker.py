@@ -1,9 +1,10 @@
+import sys
 from operator import itemgetter
 from dataclasses import dataclass
 from enum import Enum
 import math
 import time
-from typing import Any, Iterator, Literal, Sequence, TypedDict
+from typing import Any, Iterator, Literal, Sequence, TypedDict, cast
 from abc import ABC, abstractmethod
 
 from ansys.aedt.core.maxwell import Maxwell3d
@@ -22,8 +23,11 @@ from ansys.aedt.core.modules.solve_sweeps import SetupProps
 from pathlib import Path
 
 import numpy as np
-
-import sys
+np.random.seed(123)  # E38_8_25
+# np.random.seed(1)  #
+# np.random.seed(2)  # E25_13_7
+# np.random.seed(3)  # E20_10_5
+# np.random.seed(4)
 
 
 class XEnum(int, Enum):
@@ -424,6 +428,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
           r["Rx_space_x"]
         )
       else:
+        RX너비가_코어에_들어가는가 = not (v["Rx_width"] < v["l2"])
+
         x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
         turns = v["Tx_turns"]
         center = v["l1_center"]
@@ -627,6 +633,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       vector=Rx_2_move
     )
 
+  def create_winding_TX(self):
+    o3ds = self.o3ds
     turns = self.v['Tx_turns']
     half_turns = math.ceil(turns / 2)
 
@@ -689,7 +697,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     sign = "-" if turns % 2 == 0 else "+"
     sf = False
 
-    for i in range(turns):
+    for _ in range(turns):
       if sf:
         points.append(shrink(flip(points, 'y'), 'y', 'Tx_space_y/2'))
         points.append(shrink(flip(points, 'x'), 'x', 'Tx_space_x/2'))
@@ -701,6 +709,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     points.append(
       shrink(points, 'y', f'{points[-1][1]} {sign} Tx_width * 1.5'))
+    """
     # 1turn
     # points.append(flip(points, 'y'))
     # points.append(flip(points, 'x'))
@@ -745,7 +754,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     # points.append(flip(points, 'y'))
     # points.append(flip(points, 'x'))
     # points.append(shrink(points, 'y', f'{points[-1][1]} + Tx_width * 1.5'))
-
+    """
     points_connect = []
     last_x, last_y, last_z = points[-1]
     points_connect.append(
@@ -892,8 +901,8 @@ if __name__ == "__main__":
   ranges["g1"] = [0.1, 0.1, 0.01, 2]
   ranges["g2"] = [0, 0.5, 0.01, 2]
 
-  ranges["Tx_space_x"] = [0.1, 5, 0.1, 1]
-  ranges["Tx_space_y"] = [0.1, 5, 0.1, 1]
+  ranges["Tx_space_x"] = [0.1, 7, 0.1, 1]
+  ranges["Tx_space_y"] = [0.1, 7, 0.1, 1]
   ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
 
@@ -905,7 +914,7 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_width"] = [0.5, 3, 0.1, 1]
+  ranges["Tx_width"] = [0.1, 2, 0.01, 1]
   ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
@@ -913,7 +922,8 @@ if __name__ == "__main__":
   sim.set_material()
   sim.validate_variable()
   sim.create_core()
-  sim.create_winding()
+  # sim.create_winding()
+  sim.create_winding_TX()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
