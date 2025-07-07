@@ -419,45 +419,41 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
           r[key]
         )
 
-      if v["Rx_width"] > v["l2"]:
-        v["Rx_width"] = self._random_choice(
-          r["Rx_width"]
-        )
-      elif (v["w1"] * w1_ratio + 2 * v["Rx_space_x"]) < v["l1_center"]:
-        v["Rx_space_x"] = self._random_choice(
-          r["Rx_space_x"]
-        )
+      # TX 변수들 :
+      x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
+      turns = int(v["Tx_turns"])
+      center = v["l1_center"]
+      Tx_total_width_x = ((turns // 2) + 1) * (v["Tx_space_x"]) / 2
+      Tx_total_width_y = ((turns // 2) + 1) * (v["Tx_space_y"]) / 2
+      y = v["w1"] / 2 + Tx_total_width_y
+
+      # TX 불리언 변수들 :
+      권선_시작_x좌표가_적당한가 = not (x < (center / 2 + v["l2"]))
+      권선_X_전체너비가_적당한가 = not (0.4 * v["l2"] < Tx_total_width_x < v["l2"])
+      # 권선_Y_전체너비가_적당한가 = not (0.4 * v["l2"] < Tx_total_width_y < v["l2"])
+      권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = not ((turns / 2 + 1) *
+                                       v["Tx_width"] < min(Tx_total_width_x, Tx_total_width_y))
+      bool_list = []
+      bool_list.append(권선_시작_x좌표가_적당한가)
+      bool_list.append(권선_X_전체너비가_적당한가)
+      bool_list.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
+      # if v["Rx_width"] > v["l2"]:
+      #   v["Rx_width"] = self._random_choice(
+      #     r["Rx_width"]
+      #   )
+      # elif (v["w1"] * w1_ratio + 2 * v["Rx_space_x"]) < v["l1_center"]:
+      #   v["Rx_space_x"] = self._random_choice(
+      #     r["Rx_space_x"]
+      #   )
+      # else:
+
+      if any(bool_list):
+        rand("Tx_space_x")
+        rand("Tx_space_y")
+        rand("Tx_width")
+        rand("Tx_turns")
       else:
-        RX너비가_코어에_들어가는가 = not (v["Rx_width"] < v["l2"])
-
-        x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
-        turns = v["Tx_turns"]
-        center = v["l1_center"]
-        # Tx_total_width_x = turns * (v["Tx_width"] + v["Tx_space_x"])
-        Tx_total_width_x = (turns / 2 + 1) * (v["Tx_space_x"]) / 2
-        Tx_total_width_y = (turns / 2 + 1) * (v["Tx_space_y"]) / 2
-
-        y = (v["w1"] / 2 + Tx_total_width_y)
-
-        권선_X_전체너비가_적당한가 = not (0.7 * v["l2"] < Tx_total_width_x < v["l2"])
-        권선_Y_전체너비가_적당한가 = not (0.7 * v["l2"] < Tx_total_width_y < v["l2"])
-        권선_자체의너비가_적당한가 = not ((turns / 2 + 1) *
-                              v["Tx_width"] < min(Tx_total_width_x, Tx_total_width_y))
-        if (x > (center / 2 + v["l2"])):
-          # 권선 시작 x좌표가 코일 안으로 들어가는지 여부
-          rand("Tx_space_x")
-          rand("Tx_width")
-        # elif (v["l2"] < Tx_total_width_x):
-        #   rand("Tx_space_x")
-        #   rand("Tx_width")
-        #   rand("Tx_turns")
-        elif (권선_X_전체너비가_적당한가 or 권선_Y_전체너비가_적당한가 or 권선_자체의너비가_적당한가):
-          rand("Tx_space_x")
-          rand("Tx_space_y")
-          rand("Tx_width")
-          rand("Tx_turns")
-        else:
-          break
+        break
 
     del self.r
 
