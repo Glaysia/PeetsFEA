@@ -23,11 +23,14 @@ from ansys.aedt.core.modules.solve_sweeps import SetupProps
 from pathlib import Path
 
 import numpy as np
-np.random.seed(123)  # E38_8_25
-# np.random.seed(1)  #
+
+# np.random.seed(123)  # E38_8_25
+# np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
-# np.random.seed(3)  # E20_10_5
-# np.random.seed(4)
+# np.random.seed(3)  # E32_6_20
+# np.random.seed((seed := 3212581884))
+np.random.seed((seed := int(time.time_ns() % (2**32))))
+# 3212581884에서 권선 실패
 
 
 class XEnum(int, Enum):
@@ -392,6 +395,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
   def validate_variable(self) -> None:
     r = self.r
     v: dict[str, float] = self.v
+    self.v['seed'] = seed
+    AedtHandler.log(f"랜덤시드 {seed}")
     Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
                  ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
     Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
@@ -681,8 +686,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     # y = (v["w1"] / 2 + Tx_total_width_y)
     total_width = (turns // 2 + 1) * \
         from_expression("Tx_space_y") / 2
+
+    offset = _ if ((_ := from_expression("2*l1_leg")) > 40) else 40
     self.points_Tx = [
-      ["(w1*w1_ratio/2 + core_P_w1 + 40mm)",
+      [f"(w1*w1_ratio/2 + core_P_w1 + {offset}mm)",
        f"-(w1/2 + {total_width}mm)", "0mm"],
       ["-(l1_center/2 + l2 - Tx_width )",
        f"-(w1/2 + {total_width}mm)", "0mm"],
@@ -824,10 +831,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     self.modeler.unite(
       assignment=[o3ds['Tx_1'], o3ds["Tx_2"], o3ds["Tx_connect"]])
 
-    o3ds["RX_1"].color = [0, 0, 255]
-    o3ds["RX_1"].transparency = 0
-    o3ds["RX_2"].color = [0, 0, 255]
-    o3ds["RX_2"].transparency = 0
+    # o3ds["RX_1"].color = [0, 0, 255]
+    # o3ds["RX_1"].transparency = 0
+    # o3ds["RX_2"].color = [0, 0, 255]
+    # o3ds["RX_2"].transparency = 0
     o3ds['Tx_1'].color = [255, 0, 0]
     o3ds['Tx_1'].transparency = 0
 
@@ -852,7 +859,7 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
 
   sim = Project1_EE_Plana_Plana_2Series(
-    name=name, aedt_dir=aedt_dir, des_aedt_pid=856)
+    name=name, aedt_dir=aedt_dir, des_aedt_pid=6376)
   ccore: list[dict] = [
     {'EXX': 'E10_5.5_5', 'h1': 8.5, 'l1_center': 2.35,
      'l1_leg': 1.175, 'l1_top': 1.25, 'l2': 2.75, 'w1': 4.8},
@@ -942,8 +949,8 @@ if __name__ == "__main__":
   ranges["g1"] = [0.1, 0.1, 0.01, 2]
   ranges["g2"] = [0, 0.5, 0.01, 2]
 
-  ranges["Tx_space_x"] = [0.1, 7, 0.1, 1]  # rand TX
-  ranges["Tx_space_y"] = [0.1, 7, 0.1, 1]  # rand TX
+  ranges["Tx_space_x"] = [0.1, 7, 0.1, 2]  # rand TX
+  ranges["Tx_space_y"] = [0.1, 7, 0.1, 2]  # rand TX
   ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
 
@@ -955,16 +962,18 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_width"] = [0.1, 2, 0.01, 1]  # rand TX
+  ranges["Tx_width"] = [0.1, 2, 0.01, 2]  # rand TX
   ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
   sim.set_variable_byrange(input_ranges=ranges)
   sim.set_material()
   sim.validate_variable()
+
   sim.create_core()
   # sim.create_winding()
   sim.create_winding_TX()
+
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
