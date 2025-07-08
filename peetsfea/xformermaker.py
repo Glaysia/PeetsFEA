@@ -463,6 +463,44 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       bool_list_txcoil.append(권선_X너비가_코일에_들어가는가)
       bool_list_txcoil.append(권선_Y너비가_적당한가)
 
+      # RX 변수들 :
+      turns = int(v["Rx_turns"])
+      hTurns = turns // 2
+      space_x = v["Rx_space_x"]
+      space_y = v["Rx_space_y"]
+      width = v["Rx_width"]
+      l1_center = v["l1_center"]
+      l2 = v["l2"]
+      Rx_tap = v["Rx_tap"]
+      Rx_total_width_x = (hTurns) * (v["Rx_space_x"]) + v["Rx_width"]
+      Rx_total_width_y = (hTurns) * (v["Rx_space_y"]) + v["Rx_width"]
+
+      # RX 불리언 변수들 :
+
+      권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = not (
+        width < min(space_x, space_y)
+      )
+
+      권선_X너비가_코일에_들어가는가 = not (
+        0.3 * l2 < Rx_total_width_x < 0.97 * l2
+      )
+
+      권선_Y너비가_적당한가 = not (
+        Rx_total_width_y < 0.97 * Rx_tap
+      )
+
+      if turns == 1:
+        권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = False
+        권선_X너비가_코일에_들어가는가 = not (
+          0.6 * l2 < (v["Rx_width"]) < 0.97 * l2
+        )
+        권선_Y너비가_적당한가 = False
+
+      bool_list_rxcoil = []
+      bool_list_rxcoil.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
+      bool_list_rxcoil.append(권선_X너비가_코일에_들어가는가)
+      bool_list_rxcoil.append(권선_Y너비가_적당한가)
+
       # 코어 변수들
       A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
       B = 2 * (v["l2"]) + v['l1_center']
@@ -529,6 +567,12 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         rand("Tx_width")
         rand("Tx_turns")
         rand("Tx_tap")
+      elif any(bool_list_rxcoil):
+        rand("Rx_space_x")
+        rand("Rx_space_y")
+        rand("Rx_width")
+        rand("Rx_turns")
+        rand("Rx_tap")
       else:
         break
 
@@ -1021,8 +1065,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       [last_x, 0, from_expression(f"{last_z}+({coil}_height/2)")])
 
     o3ds = self.o3ds
-    o3ds['Tx_connect'] = self.modeler.create_polyline(
-        points_connect, name=f"Tx_connect", xsection_type="Circle", xsection_width="Tx_width*0.8", xsection_num_seg=12)  # type: ignore
+    o3ds[f'{coil}_connect'] = self.modeler.create_polyline(
+        points_connect, name=f"{coil}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
 
     o3ds[f'{coil}_1'] = self._create_polyline(
         points=points, name=f"{coil}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
@@ -1149,13 +1193,15 @@ if __name__ == "__main__":
   ranges["l2_tap"] = [0, 0, 1, 0]
   ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["Tx_turns"] = [14, 14, 1, 0]  # rand TX
+  ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
   ranges["Tx_tap"] = [2, 35, 1, 0]
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
   ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
 
-  ranges["Rx_preg"] = [0.01, 0.2, 0.01, 2]
+  ranges["Rx_turns"] = [1, 1, 1, 0]  # rand RX
+  ranges["Rx_tap"] = [2, 35, 1, 0]
   ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
+  ranges["Rx_preg"] = [0.01, 0.1, 0.01, 2]
 
   ranges["g1"] = [0.1, 0.1, 0.01, 2]
   ranges["g2"] = [0, 0.5, 0.01, 2]
@@ -1190,7 +1236,8 @@ if __name__ == "__main__":
   sim.create_core()
   # sim.create_winding()
   # sim.create_winding_TX()
-  sim.create_winding_new("Tx")
+  # sim.create_winding_new("Tx")
+  sim.create_winding_new("Rx")
 
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
