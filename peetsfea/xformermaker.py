@@ -406,7 +406,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     timeout_sec = 500
     w1_ratio = float(AedtHandler.peets_m3d.get_evaluated_value("w1_ratio"))
     while (True):
-      AedtHandler.log(str(self.v))
+      # AedtHandler.log(str(self.v))
+      print(str(self.v))
       if time.monotonic() - start > timeout_sec:
         self.is_validated = True
         self.create_core()
@@ -446,6 +447,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       l1lpA = l1_leg / A
       l1tpA = l1_top / A
       w1pA = v['w1'] / A
+      l2pA = v['l2'] / A
 
       B적당 = not (0.3 < BpA < 1)
       C적당 = not (0.07 < CpA < 0.6)
@@ -454,12 +456,16 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       l1_leg적당 = not (0.02 < l1lpA < 0.5)
       l1_top적당 = not (0.02 < l1tpA < 0.5)
       w1적당 = not (0.1 < w1pA < 3)
+      l2적당 = not (0.05 < l2pA < 2)
       # 상용코어의 범위보다 훨씬 넓게 잡음
-      #             B/A       C/A       D/A       E/A  l1_leg/A  l1_top/A   w1/A
-      # min    0.664884  0.138699  0.159375  0.079687  0.069349  0.068493   0.237013
-      # max    0.861301  0.335116  0.780952  0.619048  0.167558  0.178744   0.793750
-
-      코어가_너무기형적이진_않은가 = any((B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당))
+      #             B/A       C/A       D/A       E/A  l1_leg/A  l1_top/A
+      # min    0.664884  0.138699  0.159375  0.079687  0.069349  0.068493
+      # max    0.861301  0.335116  0.780952  0.619048  0.167558  0.178744
+      #          w1/A      l2/A
+      #          0.237013  0.164884
+      #          0.793750  0.361301
+      코어가_너무기형적이진_않은가 = any(
+        (B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당, l2적당))
       # 시뮬이 너무 오래 돌 것 같아서 제약조건 추가함
 
       # TX 불리언 변수들 :
@@ -490,9 +496,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         rand("Tx_width")
         rand("Tx_turns")
 
-        # 코어가 너무 기형적이진 않으냐
+        # 코어가 너무 기형적이진 않으냐 <<< 얘네를 분리해라
         rand("l1_leg")
         rand("l2")
+        rand("w1")
         rand("l1_center")
         rand("h1")
         rand("l1_top")
@@ -859,7 +866,7 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
 
   sim = Project1_EE_Plana_Plana_2Series(
-    name=name, aedt_dir=aedt_dir, des_aedt_pid=6376)
+    name=name, aedt_dir=aedt_dir, des_aedt_pid=5576)
   ccore: list[dict] = [
     {'EXX': 'E10_5.5_5', 'h1': 8.5, 'l1_center': 2.35,
      'l1_leg': 1.175, 'l1_top': 1.25, 'l2': 2.75, 'w1': 4.8},
@@ -938,7 +945,7 @@ if __name__ == "__main__":
   ranges["l2_tap"] = [0, 0, 1, 0]
   ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
+  ranges["Tx_turns"] = [1, 1, 1, 0]  # rand TX
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
   ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
   ranges["Rx_space_y"] = [0.1, 1, 0.1, 1]
@@ -968,7 +975,13 @@ if __name__ == "__main__":
   sim.set_variable_byvalue(input_values=values)
   sim.set_variable_byrange(input_ranges=ranges)
   sim.set_material()
-  sim.validate_variable()
+  try:
+    sim.validate_variable()
+  except KeyboardInterrupt as e:
+    print(e)
+    sim.is_validated = True
+    sim.create_core()
+    exit()
 
   sim.create_core()
   # sim.create_winding()
