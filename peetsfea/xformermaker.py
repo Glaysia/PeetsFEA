@@ -28,7 +28,7 @@ import numpy as np
 # np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
 # np.random.seed(3)  # E32_6_20
-# np.random.seed((seed := 3212581884))
+# np.random.seed((seed := 3631894956))
 np.random.seed((seed := int(time.time_ns() % (2**32))))
 # 3212581884에서 권선 실패
 
@@ -426,13 +426,37 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         )
 
       # TX 변수들 :
-      x = (v["w1"] * w1_ratio / 2 + v["Tx_space_x"] + v["Tx_width"] / 2)
       turns = int(v["Tx_turns"])
-      center = v["l1_center"]
-      Tx_total_width_x = ((turns // 2) + 2) * (v["Tx_space_x"]) / 2
-      Tx_total_width_y = ((turns // 2) + 2) * (v["Tx_space_y"]) / 2
-      y = v["w1"] / 2 + Tx_total_width_y
+      hTurns = turns // 2
+      space_x = v["Tx_space_x"]
+      space_y = v["Tx_space_y"]
+      width = v["Tx_width"]
+      l1_center = v["l1_center"]
+      l2 = v["l2"]
+      Tx_tap = v["Tx_tap"]
+      Tx_total_width_x = (hTurns) * (v["Tx_space_x"]) + v["Tx_width"]
+      Tx_total_width_y = (hTurns) * (v["Tx_space_y"]) + v["Tx_width"]
 
+      # TX 불리언 변수들 :
+
+      권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = not (
+        width < min(space_x, space_y)
+      )
+
+      권선_X너비가_코일에_들어가는가 = not (
+       0.3 * l2 < Tx_total_width_x < 0.97 * l2
+      )
+
+      권선_Y너비가_적당한가 = not (
+        Tx_total_width_y < 0.97 * Tx_tap
+      )
+
+      bool_list_txcoil = []
+      bool_list_txcoil.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
+      bool_list_txcoil.append(권선_X너비가_코일에_들어가는가)
+      bool_list_txcoil.append(권선_Y너비가_적당한가)
+
+      # 코어 변수들
       A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
       B = 2 * (v["l2"]) + v['l1_center']
       C = v['l1_center']
@@ -449,6 +473,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       w1pA = v['w1'] / A
       l2pA = v['l2'] / A
 
+      # 코어 불리언 변수들
       B적당 = not (0.3 < BpA < 1)
       C적당 = not (0.07 < CpA < 0.6)
       D적당 = not (0.08 < DpA < 1.5)
@@ -468,17 +493,11 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         (B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당, l2적당))
       # 시뮬이 너무 오래 돌 것 같아서 제약조건 추가함
 
-      # TX 불리언 변수들 :
-      권선_시작_x좌표가_적당한가 = not (x < (center / 2 + v["l2"]))
-      권선_X_전체너비가_적당한가 = not (0.4 * v["l2"] < Tx_total_width_x < v["l2"])
-      # 권선_Y_전체너비가_적당한가 = not (0.4 * v["l2"] < Tx_total_width_y < v["l2"])
-      권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = not ((turns / 2 + 1) *
-                                       v["Tx_width"] < min(Tx_total_width_x, Tx_total_width_y))
-      bool_list = []
-      bool_list.append(권선_시작_x좌표가_적당한가)
-      bool_list.append(권선_X_전체너비가_적당한가)
-      bool_list.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
-      bool_list.append(코어가_너무기형적이진_않은가)
+      bool_list_core = []
+      # bool_list.append(권선_시작_x좌표가_적당한가)
+      # bool_list.append(권선_X_전체너비가_적당한가)
+      # bool_list.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
+      bool_list_core.append(코어가_너무기형적이진_않은가)
       # if v["Rx_width"] > v["l2"]:
       #   v["Rx_width"] = self._random_choice(
       #     r["Rx_width"]
@@ -489,13 +508,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       #   )
       # else:
 
-      if any(bool_list):
-        # TX코일이 코어에 들어는 가냐
-        rand("Tx_space_x")
-        rand("Tx_space_y")
-        rand("Tx_width")
-        rand("Tx_turns")
-
+      if any(bool_list_core):
         # 코어가 너무 기형적이진 않으냐 <<< 얘네를 분리해라
         rand("l1_leg")
         rand("l2")
@@ -503,6 +516,12 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         rand("l1_center")
         rand("h1")
         rand("l1_top")
+      elif any(bool_list_txcoil):
+        rand("Tx_space_x")
+        rand("Tx_space_y")
+        rand("Tx_width")
+        rand("Tx_turns")
+        rand("Tx_tap")
       else:
         break
 
@@ -847,6 +866,184 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     AedtHandler.log("Winding 생성 완료")
 
+  def create_winding_new(self, coil: str):
+    AedtHandler.peets_m3d[f"{coil}_hTurns"] = int(self.v[f"{coil}_turns"]) // 2
+
+    START_X = f"(-({coil}_hTurns * {coil}_space_x + {coil}_width + l1_center/2 - 0.5*{coil}_width))"
+    START_Y = f"({coil}_hTurns * {coil}_space_y + {coil}_width + w1/2 - 0.5*{coil}_width)"
+    START_Z = f"0"
+    points = [
+      ["l1_center+100mm", START_Y, START_Z],
+      [START_X, START_Y, START_Z]
+    ]
+
+    def from_expression(exp: str) -> float:  # 단위 무조건 mm
+      m3d = AedtHandler.peets_m3d
+      m3d['peets_tmp'] = exp
+      return 1000 * float(f"{m3d.get_evaluated_value('peets_tmp'):.9f}")
+
+    def abs_exp(exp: str) -> str:
+      value = from_expression(exp)
+      sign = is_positive = value >= 0
+
+      if is_positive:
+        if exp[2] == '-':
+          abs_value = exp[2:-1]
+        else:
+          abs_value = exp
+      else:
+        abs_value = exp[2:-1]
+
+      return abs_value
+
+    def flip(point: list[str], axis: Literal['x', 'y', 'z']) -> list[str]:
+      idx = {'x': 0, 'y': 1, 'z': 2}
+      idx = idx[axis]
+      new_point = point[:]
+      old_value = point[idx]
+      abs_value = abs_exp(old_value)
+      is_positive = from_expression(old_value) > 0
+      new_value = f"(-{abs_value})" if is_positive else abs_value
+      new_point[idx] = new_value
+      return new_point
+
+    def shrink(point: list[str], axis: Literal['x', 'y', 'z'], exp: str) -> list[str]:
+      idx = {'x': 0, 'y': 1, 'z': 2}
+      idx = idx[axis]
+      new_point = point[:]
+      value = from_expression(point[idx])
+      old_value = point[idx]
+      sign = is_positive = value >= 0
+      sign_str: Literal[''] | Literal['-'] = "" if sign else "-"
+      abs_value = abs_exp(old_value)
+
+      new_value = f"({sign_str}({abs_value}-{exp}))"
+      new_point[idx] = new_value
+
+      return new_point
+
+    turn = int(self.v[f'{coil}_turns'])
+    is_turn_odd = (turn % 2 == 1)
+
+    for _ in range(turn):
+      if _ % 2 == 0:
+        last = points[-1]
+        points.append(flip(last, 'y'))
+
+        last = points[-1]
+        points.append(flip(last, 'x'))
+      else:
+        last = points[-1]
+        points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        last = points[-1]
+        points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+    """
+        # last = points[-1]
+        # points.append(flip(last, 'y', ))
+
+        # last = points[-1]
+        # points.append(flip(last, 'x', ))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+
+        # last = points[-1]
+        # points.append(flip(last, 'y', ))
+
+        # last = points[-1]
+        # points.append(flip(last, 'x', ))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+
+        # last = points[-1]
+        # points.append(flip(last, 'y', ))
+
+        # last = points[-1]
+        # points.append(flip(last, 'x', ))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+
+        # last = points[-1]
+        # points.append(flip(last, 'y', ))
+
+        # last = points[-1]
+        # points.append(flip(last, 'x', ))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+
+        # last = points[-1]
+        # points.append(flip(last, 'y', ))
+
+        # last = points[-1]
+        # points.append(flip(last, 'x', ))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+
+        # last = points[-1]
+        # points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+    """
+
+    last = points[-1]
+    sign = "+" if is_turn_odd else "-"
+    msign = "-" if is_turn_odd else "+"
+    points.append(
+      shrink(last, 'y', f'{abs_exp(last[1])} - 1.5*{coil}_width'))
+
+    points_connect = []
+    last_x, last_y, last_z = points[-1]
+    points_connect.append(
+      [last_x, 0, from_expression(f"{last_z}-({coil}_height/2)")])
+    points_connect.append(
+      [last_x, 0, from_expression(f"{last_z}+({coil}_height/2)")])
+
+    o3ds = self.o3ds
+    o3ds['Tx_connect'] = self.modeler.create_polyline(
+        points_connect, name=f"Tx_connect", xsection_type="Circle", xsection_width="Tx_width*0.8", xsection_num_seg=12)  # type: ignore
+
+    o3ds[f'{coil}_1'] = self._create_polyline(
+        points=points, name=f"{coil}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
+
+    self.modeler.copy(assignment=o3ds[f'{coil}_1'])
+    self.modeler.paste()
+    o3ds[f'{coil}_2'] = self.modeler.get_object_from_name(  # type: ignore
+      assignment=f"{coil}_2")
+    self.modeler.mirror(
+      assignment=o3ds[f'{coil}_2'],
+      origin=[0, 0, 0], vector=[0, 1, 0]
+    )
+    self.modeler.move(
+      assignment=o3ds[f'{coil}_2'],
+      vector=["0mm", "0mm", f"-({coil}_preg/2+{coil}_height/2)"]
+    )
+
+    self.modeler.move(
+      assignment=o3ds[f'{coil}_1'],
+      vector=["0mm", "0mm", f"{coil}_preg/2+{coil}_height/2"]
+    )
+
+    self.modeler.unite(
+      assignment=[o3ds[f'{coil}_1'], o3ds[f"{coil}_2"], o3ds[f"{coil}_connect"]])
+
+    o3ds[f'{coil}_1'].color = [255, 0, 0]
+    o3ds[f'{coil}_1'].transparency = 0
+
   def create_exctation(self) -> None:
     pass
 
@@ -935,20 +1132,20 @@ if __name__ == "__main__":
   # values["l2"] = map(itemgetter("l2"), ccore)
   # values["h1"] = map(itemgetter("h1"), ccore)
 
-  ranges["w1"] = [2, 52, 40, 1]
-  ranges["l1_leg"] = [1, 12, 40, 3]
-  ranges["l1_top"] = [1, 12, 40, 3]
-  ranges["l1_center"] = [2, 25, 40, 3]
-  ranges["l2"] = [2, 25, 40, 3]
-  ranges["h1"] = [4, 52, 40, 2]
+  ranges["w1"] = [2, 52, 1.2, 1]
+  ranges["l1_leg"] = [1, 12, 1.2, 3]
+  ranges["l1_top"] = [1, 12, 1.2, 3]
+  ranges["l1_center"] = [2, 25, 1.2, 3]
+  ranges["l2"] = [2, 25, 1.2, 3]
+  ranges["h1"] = [4, 52, 1.2, 2]
 
   ranges["l2_tap"] = [0, 0, 1, 0]
   ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["Tx_turns"] = [1, 1, 1, 0]  # rand TX
+  ranges["Tx_turns"] = [5, 5, 1, 0]  # rand TX
+  ranges["Tx_tap"] = [2, 35, 1, 0]
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
   ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
-  ranges["Rx_space_y"] = [0.1, 1, 0.1, 1]
 
   ranges["Rx_preg"] = [0.01, 0.2, 0.01, 2]
   ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
@@ -969,7 +1166,7 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_width"] = [0.1, 2, 0.01, 2]  # rand TX
+  ranges["Tx_width"] = [0.1, 10, 0.01, 2]  # rand TX
   ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
@@ -985,7 +1182,8 @@ if __name__ == "__main__":
 
   sim.create_core()
   # sim.create_winding()
-  sim.create_winding_TX()
+  # sim.create_winding_TX()
+  sim.create_winding_new("Tx")
 
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
