@@ -28,7 +28,7 @@ import numpy as np
 # np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
 # np.random.seed(3)  # E32_6_20
-# np.random.seed((seed := 2923062185))
+# np.random.seed((seed := 4214855346))
 np.random.seed((seed := int(time.time_ns() % (2**32))))
 # 3212581884에서 권선 실패
 
@@ -917,7 +917,12 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     AedtHandler.log("Winding 생성 완료")
 
-  def create_winding_new(self, coil: str):
+  def create_winding_new(self, coil: str, second=None, mirrorX=None):
+    if second != None or mirrorX != None:
+      coil_name = f"{coil}_{second}_{mirrorX}"
+    else:
+      coil_name = coil
+
     AedtHandler.peets_m3d[f"{coil}_hTurns"] = int(self.v[f"{coil}_turns"]) // 2
 
     START_X = f"(-({coil}_hTurns * {coil}_space_x + {coil}_width + l1_center/2 - 0.5*{coil}_width))"
@@ -1065,35 +1070,53 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       [last_x, 0, from_expression(f"{last_z}+({coil}_height/2)")])
 
     o3ds = self.o3ds
-    o3ds[f'{coil}_connect'] = self.modeler.create_polyline(
-        points_connect, name=f"{coil}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
+    o3ds[f'{coil_name}_connect'] = self.modeler.create_polyline(
+        points_connect, name=f"{coil_name}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
 
-    o3ds[f'{coil}_1'] = self._create_polyline(
-        points=points, name=f"{coil}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
+    o3ds[f'{coil_name}_1'] = self._create_polyline(
+        points=points, name=f"{coil_name}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
 
-    self.modeler.copy(assignment=o3ds[f'{coil}_1'])
+    self.modeler.copy(assignment=o3ds[f'{coil_name}_1'])
     self.modeler.paste()
-    o3ds[f'{coil}_2'] = self.modeler.get_object_from_name(  # type: ignore
-      assignment=f"{coil}_2")
+    o3ds[f'{coil_name}_2'] = self.modeler.get_object_from_name(  # type: ignore
+      assignment=f"{coil_name}_2")
     self.modeler.mirror(
-      assignment=o3ds[f'{coil}_2'],
+      assignment=o3ds[f'{coil_name}_2'],
       origin=[0, 0, 0], vector=[0, 1, 0]
     )
     self.modeler.move(
-      assignment=o3ds[f'{coil}_2'],
+      assignment=o3ds[f'{coil_name}_2'],
       vector=["0mm", "0mm", f"-({coil}_preg/2+{coil}_height/2)"]
     )
 
     self.modeler.move(
-      assignment=o3ds[f'{coil}_1'],
+      assignment=o3ds[f'{coil_name}_1'],
       vector=["0mm", "0mm", f"{coil}_preg/2+{coil}_height/2"]
     )
 
     self.modeler.unite(
-      assignment=[o3ds[f'{coil}_1'], o3ds[f"{coil}_2"], o3ds[f"{coil}_connect"]])
+      assignment=[o3ds[f'{coil_name}_1'], o3ds[f"{coil_name}_2"], o3ds[f"{coil_name}_connect"]])
 
-    o3ds[f'{coil}_1'].color = [255, 0, 0]
-    o3ds[f'{coil}_1'].transparency = 0
+    o3ds[f'{coil_name}_1'].color = [255, 0, 0]
+    o3ds[f'{coil_name}_1'].transparency = 0
+
+    if mirrorX:
+      self.modeler.mirror(
+        assignment=o3ds[f'{coil_name}_1'],
+        origin=[0, 0, 0], vector=[1, 0, 0]
+      )
+
+    if second != None and second == False:
+      self.modeler.move(
+        assignment=o3ds[f'{coil_name}_1'],
+        vector=["0mm", "0mm", f"g2+{coil}_height/2"]
+      )
+
+    if second != None and second == True:
+      self.modeler.move(
+        assignment=o3ds[f'{coil_name}_1'],
+        vector=["0mm", "0mm", f"-g2-{coil}_height/2"]
+      )
 
   def create_exctation(self) -> None:
     pass
@@ -1112,132 +1135,138 @@ if __name__ == "__main__":
     parr_idx: str = str(sys.argv[0])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
+  while True:
+    try:
+      sim = Project1_EE_Plana_Plana_2Series(
+        name=name, aedt_dir=aedt_dir, new_desktop=False)
+      ccore: list[dict] = [
+        {'EXX': 'E10_5.5_5', 'h1': 8.5, 'l1_center': 2.35,
+         'l1_leg': 1.175, 'l1_top': 1.25, 'l2': 2.75, 'w1': 4.8},
+        {'EXX': 'E13_6_6', 'h1': 8.2, 'l1_center': 3.2,
+         'l1_leg': 1.6, 'l1_top': 1.6, 'l2': 3.15, 'w1': 6.4},
+        {'EXX': 'E13_7_4', 'h1': 9.0, 'l1_center': 3.7,
+         'l1_leg': 1.85, 'l1_top': 2.0, 'l2': 2.6, 'w1': 3.7},
+        {'EXX': 'E16_8_5', 'h1': 11.4, 'l1_center': 4.7,
+         'l1_leg': 2.35, 'l1_top': 2.5, 'l2': 3.3, 'w1': 4.7},
+        {'EXX': 'E19_8_5', 'h1': 11.4, 'l1_center': 4.7,
+         'l1_leg': 2.35, 'l1_top': 2.4, 'l2': 4.85, 'w1': 4.7},
+        {'EXX': 'E20_10_5', 'h1': 12.6, 'l1_center': 5.2,
+         'l1_leg': 2.6, 'l1_top': 3.7, 'l2': 5.15, 'w1': 5.3},
+        {'EXX': 'E20_10_6', 'h1': 14.0, 'l1_center': 5.9,
+         'l1_leg': 2.95, 'l1_top': 3.2, 'l2': 4.1, 'w1': 5.9},
+        {'EXX': 'E25_10_6', 'h1': 12.8, 'l1_center': 6.35,
+         'l1_leg': 3.175, 'l1_top': 3.25, 'l2': 6.35, 'w1': 6.35},
+        {'EXX': 'E25_13_7', 'h1': 17.4, 'l1_center': 7.5,
+         'l1_leg': 3.75, 'l1_top': 4.1, 'l2': 5.0, 'w1': 7.5},
+        {'EXX': 'E30_15_7', 'h1': 19.4, 'l1_center': 7.2,
+         'l1_leg': 3.6, 'l1_top': 5.3, 'l2': 8.2, 'w1': 7.3},
+        {'EXX': 'E32_6_20', 'h1': 6.36, 'l1_center': 6.35,
+         'l1_leg': 3.175, 'l1_top': 3.17, 'l2': 9.525, 'w1': 20.32},
+        {'EXX': 'E34_14_9', 'h1': 19.6, 'l1_center': 9.3,
+         'l1_leg': 4.65, 'l1_top': 4.3, 'l2': 7.85, 'w1': 9.3},
+        {'EXX': 'E35_18_10', 'h1': 25.0, 'l1_center': 10.0,
+         'l1_leg': 5.0, 'l1_top': 5.0, 'l2': 7.5, 'w1': 10.0},
+        {'EXX': 'E38_8_25', 'h1': 8.9, 'l1_center': 7.6,
+         'l1_leg': 3.8, 'l1_top': 3.81, 'l2': 11.45, 'w1': 25.4},
+        {'EXX': 'E41_17_12', 'h1': 20.8, 'l1_center': 12.45,
+         'l1_leg': 6.225, 'l1_top': 6.2, 'l2': 7.85, 'w1': 12.4},
+        {'EXX': 'E42_21_15', 'h1': 29.6, 'l1_center': 12.2,
+         'l1_leg': 6.1, 'l1_top': 6.2, 'l2': 9.3, 'w1': 15.2},
+        {'EXX': 'E42_21_20', 'h1': 29.6, 'l1_center': 12.2,
+         'l1_leg': 6.1, 'l1_top': 6.2, 'l2': 9.3, 'w1': 20.0},
+        {'EXX': 'E42_33_20', 'h1': 52.0, 'l1_center': 12.2,
+         'l1_leg': 6.1, 'l1_top': 6.8, 'l2': 8.8, 'w1': 20.0},
+        {'EXX': 'E43_10_28', 'h1': 10.8, 'l1_center': 8.1,
+         'l1_leg': 4.05, 'l1_top': 4.1, 'l2': 13.5, 'w1': 27.9},
+        {'EXX': 'E47_20_16', 'h1': 24.2, 'l1_center': 15.6,
+         'l1_leg': 7.8, 'l1_top': 7.5, 'l2': 7.85, 'w1': 15.6},
+        {'EXX': 'E55_28_21', 'h1': 37.0, 'l1_center': 17.2,
+         'l1_leg': 8.6, 'l1_top': 9.0, 'l2': 10.9, 'w1': 21.0},
+        {'EXX': 'E56_24_19', 'h1': 29.2, 'l1_center': 18.8,
+         'l1_leg': 9.4, 'l1_top': 9.0, 'l2': 9.25, 'w1': 18.8},
+        {'EXX': 'E58_11_38', 'h1': 13.0, 'l1_center': 8.1,
+         'l1_leg': 4.05, 'l1_top': 4.0, 'l2': 21.1, 'w1': 38.1},
+        {'EXX': 'E64_10_50', 'h1': 10.2, 'l1_center': 10.2,
+         'l1_leg': 5.1, 'l1_top': 5.1, 'l2': 21.8, 'w1': 50.8},
+        {'EXX': 'E65_32_27', 'h1': 44.4, 'l1_center': 20.0,
+         'l1_leg': 10.0, 'l1_top': 10.6, 'l2': 12.5, 'w1': 27.4},
+        {'EXX': 'E71_33_32', 'h1': 43.8, 'l1_center': 22.0,
+         'l1_leg': 11.0, 'l1_top': 11.3, 'l2': 13.25, 'w1': 32.0},
+        {'EXX': 'E80_38_20', 'h1': 56.4, 'l1_center': 19.8,
+         'l1_leg': 9.9, 'l1_top': 9.9, 'l2': 20.2, 'w1': 19.8}
+      ]
 
-  sim = Project1_EE_Plana_Plana_2Series(
-    name=name, aedt_dir=aedt_dir, new_desktop=False)
-  ccore: list[dict] = [
-    {'EXX': 'E10_5.5_5', 'h1': 8.5, 'l1_center': 2.35,
-     'l1_leg': 1.175, 'l1_top': 1.25, 'l2': 2.75, 'w1': 4.8},
-    {'EXX': 'E13_6_6', 'h1': 8.2, 'l1_center': 3.2,
-     'l1_leg': 1.6, 'l1_top': 1.6, 'l2': 3.15, 'w1': 6.4},
-    {'EXX': 'E13_7_4', 'h1': 9.0, 'l1_center': 3.7,
-     'l1_leg': 1.85, 'l1_top': 2.0, 'l2': 2.6, 'w1': 3.7},
-    {'EXX': 'E16_8_5', 'h1': 11.4, 'l1_center': 4.7,
-     'l1_leg': 2.35, 'l1_top': 2.5, 'l2': 3.3, 'w1': 4.7},
-    {'EXX': 'E19_8_5', 'h1': 11.4, 'l1_center': 4.7,
-     'l1_leg': 2.35, 'l1_top': 2.4, 'l2': 4.85, 'w1': 4.7},
-    {'EXX': 'E20_10_5', 'h1': 12.6, 'l1_center': 5.2,
-     'l1_leg': 2.6, 'l1_top': 3.7, 'l2': 5.15, 'w1': 5.3},
-    {'EXX': 'E20_10_6', 'h1': 14.0, 'l1_center': 5.9,
-     'l1_leg': 2.95, 'l1_top': 3.2, 'l2': 4.1, 'w1': 5.9},
-    {'EXX': 'E25_10_6', 'h1': 12.8, 'l1_center': 6.35,
-     'l1_leg': 3.175, 'l1_top': 3.25, 'l2': 6.35, 'w1': 6.35},
-    {'EXX': 'E25_13_7', 'h1': 17.4, 'l1_center': 7.5,
-     'l1_leg': 3.75, 'l1_top': 4.1, 'l2': 5.0, 'w1': 7.5},
-    {'EXX': 'E30_15_7', 'h1': 19.4, 'l1_center': 7.2,
-     'l1_leg': 3.6, 'l1_top': 5.3, 'l2': 8.2, 'w1': 7.3},
-    {'EXX': 'E32_6_20', 'h1': 6.36, 'l1_center': 6.35,
-     'l1_leg': 3.175, 'l1_top': 3.17, 'l2': 9.525, 'w1': 20.32},
-    {'EXX': 'E34_14_9', 'h1': 19.6, 'l1_center': 9.3,
-     'l1_leg': 4.65, 'l1_top': 4.3, 'l2': 7.85, 'w1': 9.3},
-    {'EXX': 'E35_18_10', 'h1': 25.0, 'l1_center': 10.0,
-     'l1_leg': 5.0, 'l1_top': 5.0, 'l2': 7.5, 'w1': 10.0},
-    {'EXX': 'E38_8_25', 'h1': 8.9, 'l1_center': 7.6,
-     'l1_leg': 3.8, 'l1_top': 3.81, 'l2': 11.45, 'w1': 25.4},
-    {'EXX': 'E41_17_12', 'h1': 20.8, 'l1_center': 12.45,
-     'l1_leg': 6.225, 'l1_top': 6.2, 'l2': 7.85, 'w1': 12.4},
-    {'EXX': 'E42_21_15', 'h1': 29.6, 'l1_center': 12.2,
-     'l1_leg': 6.1, 'l1_top': 6.2, 'l2': 9.3, 'w1': 15.2},
-    {'EXX': 'E42_21_20', 'h1': 29.6, 'l1_center': 12.2,
-     'l1_leg': 6.1, 'l1_top': 6.2, 'l2': 9.3, 'w1': 20.0},
-    {'EXX': 'E42_33_20', 'h1': 52.0, 'l1_center': 12.2,
-     'l1_leg': 6.1, 'l1_top': 6.8, 'l2': 8.8, 'w1': 20.0},
-    {'EXX': 'E43_10_28', 'h1': 10.8, 'l1_center': 8.1,
-     'l1_leg': 4.05, 'l1_top': 4.1, 'l2': 13.5, 'w1': 27.9},
-    {'EXX': 'E47_20_16', 'h1': 24.2, 'l1_center': 15.6,
-     'l1_leg': 7.8, 'l1_top': 7.5, 'l2': 7.85, 'w1': 15.6},
-    {'EXX': 'E55_28_21', 'h1': 37.0, 'l1_center': 17.2,
-     'l1_leg': 8.6, 'l1_top': 9.0, 'l2': 10.9, 'w1': 21.0},
-    {'EXX': 'E56_24_19', 'h1': 29.2, 'l1_center': 18.8,
-     'l1_leg': 9.4, 'l1_top': 9.0, 'l2': 9.25, 'w1': 18.8},
-    {'EXX': 'E58_11_38', 'h1': 13.0, 'l1_center': 8.1,
-     'l1_leg': 4.05, 'l1_top': 4.0, 'l2': 21.1, 'w1': 38.1},
-    {'EXX': 'E64_10_50', 'h1': 10.2, 'l1_center': 10.2,
-     'l1_leg': 5.1, 'l1_top': 5.1, 'l2': 21.8, 'w1': 50.8},
-    {'EXX': 'E65_32_27', 'h1': 44.4, 'l1_center': 20.0,
-     'l1_leg': 10.0, 'l1_top': 10.6, 'l2': 12.5, 'w1': 27.4},
-    {'EXX': 'E71_33_32', 'h1': 43.8, 'l1_center': 22.0,
-     'l1_leg': 11.0, 'l1_top': 11.3, 'l2': 13.25, 'w1': 32.0},
-    {'EXX': 'E80_38_20', 'h1': 56.4, 'l1_center': 19.8,
-     'l1_leg': 9.9, 'l1_top': 9.9, 'l2': 20.2, 'w1': 19.8}
-  ]
+      values: dict[str, Iterator[float | str]] = {}
+      ranges: dict[str, list[float]] = {}
 
-  values: dict[str, Iterator[float | str]] = {}
-  ranges: dict[str, list[float]] = {}
+      # values["EXX"] = map(itemgetter("EXX"), ccore)
+      # values["w1"] = map(itemgetter("w1"), ccore)
+      # values["l1_leg"] = map(itemgetter("l1_leg"), ccore)
+      # values["l1_top"] = map(itemgetter("l1_top"), ccore)
+      # values["l1_center"] = map(itemgetter("l1_center"), ccore)
+      # values["l2"] = map(itemgetter("l2"), ccore)
+      # values["h1"] = map(itemgetter("h1"), ccore)
 
-  # values["EXX"] = map(itemgetter("EXX"), ccore)
-  # values["w1"] = map(itemgetter("w1"), ccore)
-  # values["l1_leg"] = map(itemgetter("l1_leg"), ccore)
-  # values["l1_top"] = map(itemgetter("l1_top"), ccore)
-  # values["l1_center"] = map(itemgetter("l1_center"), ccore)
-  # values["l2"] = map(itemgetter("l2"), ccore)
-  # values["h1"] = map(itemgetter("h1"), ccore)
+      ranges["w1"] = [2, 52, 1.2, 1]
+      ranges["l1_leg"] = [1, 12, 1.2, 3]
+      ranges["l1_top"] = [1, 12, 1.2, 3]
+      ranges["l1_center"] = [2, 25, 1.2, 3]
+      ranges["l2"] = [2, 25, 1.2, 3]
+      ranges["h1"] = [4, 52, 1.2, 2]
 
-  ranges["w1"] = [2, 52, 1.2, 1]
-  ranges["l1_leg"] = [1, 12, 1.2, 3]
-  ranges["l1_top"] = [1, 12, 1.2, 3]
-  ranges["l1_center"] = [2, 25, 1.2, 3]
-  ranges["l2"] = [2, 25, 1.2, 3]
-  ranges["h1"] = [4, 52, 1.2, 2]
+      ranges["l2_tap"] = [0, 0, 1, 0]
+      ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["l2_tap"] = [0, 0, 1, 0]
-  ranges["ratio"] = [0.5, 0.50, 0.01, 2]
+      ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
+      ranges["Tx_tap"] = [2, 35, 1, 0]
+      ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
+      ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
 
-  ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
-  ranges["Tx_tap"] = [2, 35, 1, 0]
-  ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
-  ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
+      ranges["Rx_turns"] = [1, 1, 1, 0]  # rand RX
+      ranges["Rx_tap"] = [2, 35, 1, 0]
+      ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
+      ranges["Rx_preg"] = [0.01, 0.1, 0.01, 2]
 
-  ranges["Rx_turns"] = [1, 1, 1, 0]  # rand RX
-  ranges["Rx_tap"] = [2, 35, 1, 0]
-  ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
-  ranges["Rx_preg"] = [0.01, 0.1, 0.01, 2]
+      ranges["g1"] = [0.1, 0.1, 0.01, 2]
+      ranges["g2"] = [0, 0.5, 0.01, 2]
 
-  ranges["g1"] = [0.1, 0.1, 0.01, 2]
-  ranges["g2"] = [0, 0.5, 0.01, 2]
+      ranges["Tx_space_x"] = [0.1, 7, 0.1, 2]  # rand TX
+      ranges["Tx_space_y"] = [0.1, 7, 0.1, 2]  # rand TX
+      ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
+      ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_space_x"] = [0.1, 7, 0.1, 2]  # rand TX
-  ranges["Tx_space_y"] = [0.1, 7, 0.1, 2]  # rand TX
-  ranges["Rx_space_x"] = [0.1, 5, 0.1, 1]
-  ranges["Rx_space_y"] = [0.1, 5, 0.1, 1]
+      ranges["core_N_w1"] = [0, 30, 1, 0]
+      ranges["core_P_w1"] = [0, 30, 1, 0]
 
-  ranges["core_N_w1"] = [0, 30, 1, 0]
-  ranges["core_P_w1"] = [0, 30, 1, 0]
+      ranges["Tx_layer_space_x"] = [0.1, 5, 0.1, 1]
+      ranges["Tx_layer_space_y"] = [0.1, 5, 0.1, 1]
+      ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
+      ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_layer_space_x"] = [0.1, 5, 0.1, 1]
-  ranges["Tx_layer_space_y"] = [0.1, 5, 0.1, 1]
-  ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
-  ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
+      ranges["Tx_width"] = [0.1, 12, 0.01, 2]  # rand TX
+      ranges["Rx_width"] = [1, 20, 0.1, 1]
 
-  ranges["Tx_width"] = [0.1, 12, 0.01, 2]  # rand TX
-  ranges["Rx_width"] = [1, 20, 0.1, 1]
+      sim.set_variable_byvalue(input_values=values)
+      sim.set_variable_byrange(input_ranges=ranges)
+      sim.set_material()
 
-  sim.set_variable_byvalue(input_values=values)
-  sim.set_variable_byrange(input_ranges=ranges)
-  sim.set_material()
-  try:
-    sim.validate_variable()
-  except KeyboardInterrupt as e:
-    print(e)
-    sim.is_validated = True
-    sim.create_core()
-    exit()
+      try:
+        sim.validate_variable()
+      except KeyboardInterrupt as e:
+        print(e)
+        sim.is_validated = True
+        sim.create_core()
+        exit()
 
-  sim.create_core()
-  # sim.create_winding()
-  # sim.create_winding_TX()
-  # sim.create_winding_new("Tx")
-  sim.create_winding_new("Rx")
+      sim.create_core()
+      sim.create_winding_new("Tx")
+      sim.create_winding_new("Rx", False, True)
+      sim.create_winding_new("Rx", True, True)
+    except Exception as e:
+      print(f"error {e}, retry")
+      np.random.seed((seed := int(time.time_ns() % (2**32))))
+    else:
+      break
 
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
