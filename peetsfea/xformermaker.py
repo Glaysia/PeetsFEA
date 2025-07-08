@@ -74,7 +74,7 @@ class XformerEntry(TypedDict):
 
 
 class XformerMakerInterface(ABC):
-  def __init__(self, name: str, aedt_dir: str, des_aedt_pid: int) -> None:
+  def __init__(self, name: str, aedt_dir: str, new_desktop: bool) -> None:
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
@@ -83,7 +83,7 @@ class XformerMakerInterface(ABC):
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,
-      des_aedt_pid=des_aedt_pid
+      new_desktop=new_desktop
     )
 
     if not isinstance(AedtHandler.peets_m3d.modeler, Modeler3D):
@@ -296,8 +296,8 @@ class XformerMakerInterface(ABC):
 
 
 class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
-  def __init__(self, name: str, aedt_dir: str, des_aedt_pid: int) -> None:
-    super().__init__(name, aedt_dir, des_aedt_pid)
+  def __init__(self, name: str, aedt_dir: str, new_desktop: bool) -> None:
+    super().__init__(name, aedt_dir, new_desktop=new_desktop)
 
     self.v: dict[str, float] = {}
     self.comments: list[str] = []
@@ -866,7 +866,7 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
 
   sim = Project1_EE_Plana_Plana_2Series(
-    name=name, aedt_dir=aedt_dir, des_aedt_pid=5576)
+    name=name, aedt_dir=aedt_dir, new_desktop=False)
   ccore: list[dict] = [
     {'EXX': 'E10_5.5_5', 'h1': 8.5, 'l1_center': 2.35,
      'l1_leg': 1.175, 'l1_top': 1.25, 'l2': 2.75, 'w1': 4.8},
