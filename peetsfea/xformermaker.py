@@ -28,7 +28,7 @@ import numpy as np
 # np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
 # np.random.seed(3)  # E32_6_20
-# np.random.seed((seed := 3631894956))
+# np.random.seed((seed := 2923062185))
 np.random.seed((seed := int(time.time_ns() % (2**32))))
 # 3212581884에서 권선 실패
 
@@ -444,12 +444,19 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       )
 
       권선_X너비가_코일에_들어가는가 = not (
-       0.3 * l2 < Tx_total_width_x < 0.97 * l2
+        0.3 * l2 < Tx_total_width_x < 0.97 * l2
       )
 
       권선_Y너비가_적당한가 = not (
         Tx_total_width_y < 0.97 * Tx_tap
       )
+
+      if turns == 1:
+        권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = False
+        권선_X너비가_코일에_들어가는가 = not (
+          0.6 * l2 < (v["Tx_width"]) < 0.97 * l2
+        )
+        권선_Y너비가_적당한가 = False
 
       bool_list_txcoil = []
       bool_list_txcoil.append(권선_가닥이_너무두꺼워서_서로_겹치지는_않는가)
@@ -1142,7 +1149,7 @@ if __name__ == "__main__":
   ranges["l2_tap"] = [0, 0, 1, 0]
   ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-  ranges["Tx_turns"] = [5, 5, 1, 0]  # rand TX
+  ranges["Tx_turns"] = [14, 14, 1, 0]  # rand TX
   ranges["Tx_tap"] = [2, 35, 1, 0]
   ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
   ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
@@ -1166,7 +1173,7 @@ if __name__ == "__main__":
   ranges["Rx_layer_space_x"] = [0.1, 5, 0.1, 1]
   ranges["Rx_layer_space_y"] = [0.1, 5, 0.1, 1]
 
-  ranges["Tx_width"] = [0.1, 10, 0.01, 2]  # rand TX
+  ranges["Tx_width"] = [0.1, 12, 0.01, 2]  # rand TX
   ranges["Rx_width"] = [1, 20, 0.1, 1]
 
   sim.set_variable_byvalue(input_values=values)
