@@ -28,9 +28,9 @@ import numpy as np
 # np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
 # np.random.seed(3)  # E32_6_20
-np.random.seed((seed := 3474842696))
-# np.random.seed((seed := int(time.time_ns() % (2**32))))
-# 3212581884에서 권선 실패
+# np.random.seed((seed := 3474842696))
+np.random.seed((seed := int(time.time_ns() % (2**32))))
+# 3474842696 권선 실패
 
 
 class XEnum(int, Enum):
@@ -451,7 +451,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         Tx_total_width_y < 0.97 * Tx_tap
       )
 
-      if turns == 1:
+      if turns in (0, 1):
         권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = False
         권선_X너비가_코일에_들어가는가 = not (
           0.6 * l2 < (v["Tx_width"]) < 0.97 * l2
@@ -1070,8 +1070,13 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       [last_x, 0, from_expression(f"{last_z}+({coil}_height/2)")])
 
     o3ds = self.o3ds
+
     o3ds[f'{coil_name}_connect'] = self.modeler.create_polyline(
         points_connect, name=f"{coil_name}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
+
+    if turn == 0:
+      o3ds[f'{coil_name}_connect'].delete()
+      o3ds[f'{coil_name}_connect'] = None  # type: ignore
 
     o3ds[f'{coil_name}_1'] = self._create_polyline(
         points=points, name=f"{coil_name}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
@@ -1225,7 +1230,7 @@ if __name__ == "__main__":
       ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
       ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
 
-      ranges["Rx_turns"] = [1, 1, 1, 0]  # rand RX
+      ranges["Rx_turns"] = [0, 0, 1, 0]  # rand RX
       ranges["Rx_tap"] = [2, 35, 1, 0]
       ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
       ranges["Rx_preg"] = [0.01, 0.1, 0.01, 2]
@@ -1262,9 +1267,9 @@ if __name__ == "__main__":
         exit()
 
       sim.create_core()
-      sim.create_winding_new("Tx")
+      # sim.create_winding_new("Tx")
       sim.create_winding_new("Rx", False, True)
-      sim.create_winding_new("Rx", True, True)
+      # sim.create_winding_new("Rx", True, True)
     except Exception as e:
       print(f"error {e}, retry")
       np.random.seed((seed := int(time.time_ns() % (2**32))))
