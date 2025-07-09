@@ -2,7 +2,7 @@
 from .xformermaker import XformerMakerInterface
 from .xformermaker import XformerType, XEnum
 from .xformermaker import seed as peets_global_rand_seed
-import project1
+from . import project1
 
 
 __all__ = [
