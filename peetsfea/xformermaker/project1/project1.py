@@ -398,12 +398,12 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       try:
         for k, v in self.o3ds.items():
           if "Tx" in k or "Rx" in k:
-            if type(v) == Object3d:
+            if 'delete' in dir(v):
               v.delete()
-            self.o3ds.pop(k)
+            self.o3ds[k] = None  # type: ignore
 
-        self.validate_variable_4Tx
-        self.validate_variable_4Rx
+        self.validate_variable_4Tx()
+        self.validate_variable_4Rx()
         self.create_winding_new("Tx")
         self.create_winding_new("Rx", False, True)
         self.create_winding_new("Rx", True, True)
