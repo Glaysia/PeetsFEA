@@ -489,7 +489,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         Rx_total_width_y < 0.97 * Rx_tap
       )
 
-      if turns == 1:
+      if turns in (0, 1):
         권선_가닥이_너무두꺼워서_서로_겹치지는_않는가 = False
         권선_X너비가_코일에_들어가는가 = not (
           0.6 * l2 < (v["Rx_width"]) < 0.97 * l2
@@ -694,6 +694,11 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     AedtHandler.log("Core 생성 완료")
 
+  def create_winding(self) -> None:
+    sim.create_winding_new("Tx")
+    sim.create_winding_new("Rx", False, True)
+    sim.create_winding_new("Rx", True, True)
+
   def create_winding_new(self, coil: str, second=None, mirrorX=None):
     if second != None or mirrorX != None:
       coil_name = f"{coil}_{second}_{mirrorX}"
@@ -850,10 +855,6 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     o3ds[f'{coil_name}_connect'] = self.modeler.create_polyline(
         points_connect, name=f"{coil_name}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
-
-    if turn == 0:
-      o3ds[f'{coil_name}_connect'].delete()
-      o3ds[f'{coil_name}_connect'] = None  # type: ignore
 
     o3ds[f'{coil_name}_1'] = self._create_polyline(
         points=points, name=f"{coil_name}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
@@ -1044,9 +1045,8 @@ if __name__ == "__main__":
         exit()
 
       sim.create_core()
-      # sim.create_winding_new("Tx")
-      sim.create_winding_new("Rx", False, True)
-      # sim.create_winding_new("Rx", True, True)
+      sim.create_winding()
+
     except Exception as e:
       print(f"error {e}, retry")
       np.random.seed((seed := int(time.time_ns() % (2**32))))
