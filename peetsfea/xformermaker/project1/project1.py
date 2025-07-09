@@ -311,9 +311,16 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     builder.build()
 
   def create_winding(self) -> None:
-    self.create_winding_new("Tx")
-    self.create_winding_new("Rx", False, True)
-    self.create_winding_new("Rx", True, True)
+    while True:
+      try:
+        self.create_winding_new("Tx")
+        self.create_winding_new("Rx", False, True)
+        self.create_winding_new("Rx", True, True)
+      except Exception as e:
+        print(f"error while create_winding {e}, retry")
+        np.random.seed((seed := int(time.time_ns() % (2**32))))
+      else:
+        break
 
   def create_winding_new(self, coil: str, second=None, mirrorX=None):
     from peetsfea.xformermaker.project1 import WindingBuilder4Project1
