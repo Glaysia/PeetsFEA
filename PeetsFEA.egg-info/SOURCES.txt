@@ -7,5 +7,7 @@ PeetsFEA.egg-info/dependency_links.txt
 PeetsFEA.egg-info/requires.txt
 PeetsFEA.egg-info/top_level.txt
 peetsfea/__init__.py
-peetsfea/aedthandler.py
-peetsfea/xformermaker.py
+peetsfea/aedthandler/__init__.py
+peetsfea/aedthandler/aedthandler.py
+peetsfea/xformermaker/__init__.py
+peetsfea/xformermaker/xformermaker.py

@@ -14,7 +14,7 @@ from ansys.aedt.core.modeler.cad.polylines import Polyline
 from ansys.aedt.core.modeler.modeler_2d import Modeler2D
 from ansys.aedt.core.modeler.modeler_3d import Modeler3D
 
-from aedthandler import AedtHandler, AedtInitializationError
+from peetsfea.aedthandler import AedtHandler, AedtInitializationError
 from ansys.aedt.core.modules.material_lib import Materials
 from ansys.aedt.core.generic.constants import SOLUTIONS
 from ansys.aedt.core.modules.material import Material
@@ -28,8 +28,8 @@ import numpy as np
 # np.random.seed(1)  # E20_10_5
 # np.random.seed(2)  # E25_13_7
 # np.random.seed(3)  # E32_6_20
-# np.random.seed((seed := 4214855346))
-np.random.seed((seed := int(time.time_ns() % (2**32))))
+np.random.seed((seed := 3474842696))
+# np.random.seed((seed := int(time.time_ns() % (2**32))))
 # 3212581884에서 권선 실패
 
 
@@ -1126,6 +1126,9 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
 
 if __name__ == "__main__":
+  import os
+  root = '/home/harry/opt/AnsysEM/v242/Linux64'
+  os.environ.setdefault('ANSYSEM_ROOT242', root)
 
   # print(sys.argv)
   if len(sys.argv) < 2:

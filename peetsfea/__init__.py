@@ -1,5 +1,5 @@
 # peetsfea/__init__.py
-from .aedthandler import AedtHandler
+from peetsfea import aedthandler
 from peetsfea.xformermaker import xformermaker
 
-__all__ = ["AedtHandler", "xformermaker"]
+__all__ = ["aedthandler", "xformermaker"]
