@@ -112,15 +112,115 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       self.create_core()
       exit()
 
+    for k, va in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{va}mm"
+
+    AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
+    self.is_validated = True
+
   def validate_variable_new(self) -> None:
+    self.validate_variable_4Core()
+    self.validate_variable_4Tx()
+    self.validate_variable_4Rx()
+
+  def validate_variable_4Core(self) -> None:
     r = self.r
     v: dict[str, float] = self.v
     self.v['seed'] = peets_global_rand_seed
     AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
-    Tx_max = max(((self.v["Tx_layer_space_x"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_x"]),
-                 ((self.v["Tx_layer_space_y"] + self.v["Tx_width"]) * math.ceil(self.v["Tx_turns"] / 2) + self.v["Tx_space_y"]))
-    Rx_max = max((self.v["Rx_width"] + self.v["Rx_space_x"]),
-                 (self.v["Rx_width"] + self.v["Rx_space_y"]))
+
+    start = time.monotonic()  # 시작 시각 기록
+    timeout_sec = 500
+
+    while (True):
+      # AedtHandler.log(str(self.v))
+      print(str(self.v))
+      if time.monotonic() - start > timeout_sec:
+        self.is_validated = True
+        self.create_core()
+        raise RuntimeError(
+            f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
+      # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
+      #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
+      #   self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
+      #   self.v["Rx_height"] = self._random_choice(r["Rx_height"])
+      #   self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
+      #   self.v["h1"] = self._random_choice(r["h1"])
+
+      def rand(key: str) -> None:
+        v[key] = self._random_choice(
+          r[key]
+        )
+
+      # 코어 변수들
+      A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
+      B = 2 * (v["l2"]) + v['l1_center']
+      C = v['l1_center']
+      D = v['h1'] * 0.5 + v['l1_top']
+      E = v['h1'] / 2
+      l1_leg = v["l1_leg"]
+      l1_top = v["l1_top"]
+      BpA = B / A
+      CpA = C / A
+      DpA = D / A
+      EpA = E / A
+      l1lpA = l1_leg / A
+      l1tpA = l1_top / A
+      w1pA = v['w1'] / A
+      l2pA = v['l2'] / A
+
+      # 코어 불리언 변수들
+      B적당 = not (0.3 < BpA < 1)
+      C적당 = not (0.07 < CpA < 0.6)
+      D적당 = not (0.08 < DpA < 1.5)
+      E적당 = not (0.02 < EpA < 1.5)
+      l1_leg적당 = not (0.02 < l1lpA < 0.5)
+      l1_top적당 = not (0.02 < l1tpA < 0.5)
+      w1적당 = not (0.1 < w1pA < 3)
+      l2적당 = not (0.05 < l2pA < 2)
+      # 상용코어의 범위보다 훨씬 넓게 잡음
+      #             B/A       C/A       D/A       E/A  l1_leg/A  l1_top/A
+      # min    0.664884  0.138699  0.159375  0.079687  0.069349  0.068493
+      # max    0.861301  0.335116  0.780952  0.619048  0.167558  0.178744
+      #          w1/A      l2/A
+      #          0.237013  0.164884
+      #          0.793750  0.361301
+      코어가_너무기형적이진_않은가 = any(
+        (B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당, l2적당))
+      # 시뮬이 너무 오래 돌 것 같아서 제약조건 추가함
+
+      bool_list_core = []
+
+      bool_list_core.append(코어가_너무기형적이진_않은가)
+
+      if any(bool_list_core):
+        # 코어가 너무 기형적이진 않으냐 <<< 얘네를 분리해라
+        rand("l1_leg")
+        rand("l2")
+        rand("w1")
+        rand("l1_center")
+        rand("h1")
+        rand("l1_top")
+
+        rand("Rx_space_x")
+        rand("Rx_space_y")
+        rand("Rx_width")
+        rand("Rx_turns")
+        rand("Rx_tap")
+      else:
+        break
+
+    for k, va in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{va}mm"
+
+    AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
+    self.is_validated = True
+
+  def validate_variable_4Tx(self) -> None:
+    r = self.r
+    v: dict[str, float] = self.v
+    self.v['seed'] = peets_global_rand_seed
+    AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
     timeout_sec = 500
@@ -183,6 +283,50 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       bool_list_txcoil.append(권선_X너비가_코일에_들어가는가)
       bool_list_txcoil.append(권선_Y너비가_적당한가)
 
+      if any(bool_list_txcoil):
+        rand("Tx_space_x")
+        rand("Tx_space_y")
+        rand("Tx_width")
+        rand("Tx_turns")
+        rand("Tx_tap")
+      else:
+        break
+
+    for k, va in self.v.items():
+      AedtHandler.peets_m3d[k] = f"{va}mm"
+
+    AedtHandler.peets_m3d["w1_ratio"] = f'(w1-2*l2)/w1'
+    self.is_validated = True
+
+  def validate_variable_4Rx(self) -> None:
+    r = self.r
+    v: dict[str, float] = self.v
+    self.v['seed'] = peets_global_rand_seed
+    AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
+
+    start = time.monotonic()  # 시작 시각 기록
+    timeout_sec = 500
+
+    while (True):
+      # AedtHandler.log(str(self.v))
+      print(str(self.v))
+      if time.monotonic() - start > timeout_sec:
+        self.is_validated = True
+        self.create_core()
+        raise RuntimeError(
+            f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
+      # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
+      #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
+      #   self.v["Tx_preg"] = self._random_choice(r["Tx_preg"])
+      #   self.v["Rx_height"] = self._random_choice(r["Rx_height"])
+      #   self.v["Rx_preg"] = self._random_choice(r["Rx_preg"])
+      #   self.v["h1"] = self._random_choice(r["h1"])
+
+      def rand(key: str) -> None:
+        v[key] = self._random_choice(
+          r[key]
+        )
+
       # RX 변수들 :
       turns = int(v["Rx_turns"])
       hTurns = turns // 2
@@ -221,62 +365,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       bool_list_rxcoil.append(권선_X너비가_코일에_들어가는가)
       bool_list_rxcoil.append(권선_Y너비가_적당한가)
 
-      # 코어 변수들
-      A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
-      B = 2 * (v["l2"]) + v['l1_center']
-      C = v['l1_center']
-      D = v['h1'] * 0.5 + v['l1_top']
-      E = v['h1'] / 2
-      l1_leg = v["l1_leg"]
-      l1_top = v["l1_top"]
-      BpA = B / A
-      CpA = C / A
-      DpA = D / A
-      EpA = E / A
-      l1lpA = l1_leg / A
-      l1tpA = l1_top / A
-      w1pA = v['w1'] / A
-      l2pA = v['l2'] / A
-
-      # 코어 불리언 변수들
-      B적당 = not (0.3 < BpA < 1)
-      C적당 = not (0.07 < CpA < 0.6)
-      D적당 = not (0.08 < DpA < 1.5)
-      E적당 = not (0.02 < EpA < 1.5)
-      l1_leg적당 = not (0.02 < l1lpA < 0.5)
-      l1_top적당 = not (0.02 < l1tpA < 0.5)
-      w1적당 = not (0.1 < w1pA < 3)
-      l2적당 = not (0.05 < l2pA < 2)
-      # 상용코어의 범위보다 훨씬 넓게 잡음
-      #             B/A       C/A       D/A       E/A  l1_leg/A  l1_top/A
-      # min    0.664884  0.138699  0.159375  0.079687  0.069349  0.068493
-      # max    0.861301  0.335116  0.780952  0.619048  0.167558  0.178744
-      #          w1/A      l2/A
-      #          0.237013  0.164884
-      #          0.793750  0.361301
-      코어가_너무기형적이진_않은가 = any(
-        (B적당, C적당, D적당, E적당, l1_leg적당, l1_top적당, w1적당, l2적당))
-      # 시뮬이 너무 오래 돌 것 같아서 제약조건 추가함
-
-      bool_list_core = []
-
-      bool_list_core.append(코어가_너무기형적이진_않은가)
-
-      if any(bool_list_core):
-        # 코어가 너무 기형적이진 않으냐 <<< 얘네를 분리해라
-        rand("l1_leg")
-        rand("l2")
-        rand("w1")
-        rand("l1_center")
-        rand("h1")
-        rand("l1_top")
-      elif any(bool_list_txcoil):
-        rand("Tx_space_x")
-        rand("Tx_space_y")
-        rand("Tx_width")
-        rand("Tx_turns")
-        rand("Tx_tap")
-      elif any(bool_list_rxcoil):
+      if any(bool_list_rxcoil):
         rand("Rx_space_x")
         rand("Rx_space_y")
         rand("Rx_width")
@@ -284,8 +373,6 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         rand("Rx_tap")
       else:
         break
-
-    del self.r
 
     for k, va in self.v.items():
       AedtHandler.peets_m3d[k] = f"{va}mm"
@@ -309,12 +396,25 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
   def create_winding(self) -> None:
     while True:
       try:
+        for k, v in self.o3ds.items():
+          if "Tx" in k or "Rx" in k:
+            if type(v) == Object3d:
+              v.delete()
+            self.o3ds.pop(k)
+
+        self.validate_variable_4Tx
+        self.validate_variable_4Rx
         self.create_winding_new("Tx")
         self.create_winding_new("Rx", False, True)
         self.create_winding_new("Rx", True, True)
       except Exception as e:
-        print(f"error while create_winding {e}, retry")
-        np.random.seed((seed := int(time.time_ns() % (2**32))))
+        if 'color' in str(e):
+          print(f"error while create_winding {e}, retry")
+          peets_global_rand_seed = int(time.time_ns() % (2**32))
+          np.random.seed(peets_global_rand_seed)
+        else:
+          raise e
+
       else:
         break
 
