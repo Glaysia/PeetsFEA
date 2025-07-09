@@ -304,108 +304,11 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     if not self.is_validated:
       raise RuntimeError(
         "validate_variable() must be called before validate_variable()")
+    from peetsfea.xformermaker.project1 import CoreBuilder4Project1
 
-    origin: Sequence[str] = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2",
-                             "-(w1)/2", "-(2*l1_top+h1)/2"]
-    dimension: Sequence[str] = [
-      "(2*l1_leg+2*l2+2*l2_tap+l1_center)", "(w1)", "(2*l1_top+h1)"]
-    self.o3ds["core_base"] = self._create_box(
-      origin=origin,
-      sizes=dimension,
-      name="core",
-      material=self.mat
-    )
-
-    origin = ["l1_center/2", "-(w1)/2", "-(h1)/2"]
-    dimension = ["l2+l2_tap", "w1", "h1"]
-    self.o3ds["core_sub1"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_sub1",
-        material="ferrite"
-    )
-
-    origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
-    dimension = ["-(l2+l2_tap)", "w1", "h1"]
-    self.o3ds["core_sub2"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_sub2",
-        material="ferrite"
-    )
-
-    # origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"]
-    # dimension = ["l1_center", "w1", "g1"]
-    # self.o3ds["core_sub3"] = self._create_box(
-    #     origin=origin,
-    #     sizes=dimension,
-    #     name="core_sub3",
-    #     material="ferrite"
-    # )
-
-    # origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(h1)/2"] # EI에 유용할듯
-    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["(l1_leg)", "(w1)", "(g2)"]
-    self.o3ds["core_sub_g1"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_sub_g1",
-        material=self.mat
-    )
-
-    origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["-(l1_leg)", "(w1)", "(g2)"]
-    self.o3ds["core_sub_g2"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_sub_g2",
-        material=self.mat
-      )
-
-    # origin = ["-l1_center/2", "-(w1)/2", "-(h1)/2"] # 나중에 과제용으로 가운데 일자가 아니게 할 때 사용하자.
-    # dimension = ["l1_center", "w1", "h1"]
-    # self.o3ds["core_unite1"] = self._create_box(
-    #     origin=origin,
-    #     sizes=dimension,
-    #     name="core_unite1",
-    #     material="ferrite"
-    # )
-
-    origin = ["-l1_center/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["l1_center", "w1", "g2"]
-    self.o3ds["core_unite_sub_g1"] = self._create_box(
-        origin=origin,
-        sizes=dimension,
-        name="core_unite_sub_g1",
-        material="ferrite"
-    )
-
-    # blank_list = [self.o3ds["core_unite1"].name] # 나중에 과제용으로 가운데 일자가 아니게 할 때 사용하자.
-    # tool_list = [self.o3ds["core_unite_sub_g1"].name]
-    # self.modeler.subtract(
-    #   blank_list=blank_list,
-    #   tool_list=tool_list,
-    #   keep_originals=True
-    # )
-
-    blank_list = [self.o3ds["core_base"].name]
-    tool_list = list(map(lambda x: self.o3ds[x].name, [
-      "core_sub1",
-      "core_sub2",
-      # "core_sub3",
-      "core_sub_g1",
-      "core_sub_g2",
-      "core_unite_sub_g1"
-    ]))
-    self.modeler.subtract(
-      blank_list=blank_list,
-      tool_list=tool_list,
-      keep_originals=False
-    )
-
-    self.o3ds["core_base"].transparency = 0.6
-
-    AedtHandler.log("Core 생성 완료")
+    builder = CoreBuilder4Project1(
+      self.modeler, self._create_box, self.mat, self.o3ds)  # type: ignore
+    builder.build()
 
   def create_winding(self) -> None:
     self.create_winding_new("Tx")
