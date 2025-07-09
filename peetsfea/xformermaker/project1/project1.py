@@ -445,23 +445,36 @@ if __name__ == "__main__":
     parr_idx: str = str(sys.argv[0])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
+  while True:
+    try:
+      sim = Project1_EE_Plana_Plana_2Series(
+          name=name, aedt_dir=aedt_dir, new_desktop=False)
 
-  sim = Project1_EE_Plana_Plana_2Series(
-    name=name, aedt_dir=aedt_dir, new_desktop=False)
+      values: dict[str, Iterator[float | str]] = {}
+      ranges: dict[str, list[float]] = {}
 
-  values: dict[str, Iterator[float | str]] = {}
-  ranges: dict[str, list[float]] = {}
+      ranges.update(sim.random_ranges())
 
-  ranges.update(sim.random_ranges())
+      sim.set_variable_byvalue(input_values=values)
+      sim.set_variable_byrange(input_ranges=ranges)
+      sim.set_material()
 
-  sim.set_variable_byvalue(input_values=values)
-  sim.set_variable_byrange(input_ranges=ranges)
-  sim.set_material()
+      try:
+        sim.validate_variable()
+      except KeyboardInterrupt as e:
+        print(e)
+        sim.is_validated = True
+        sim.create_core()
+        exit()
 
-  sim.validate_variable()
+      sim.create_core()
+      sim.create_winding()
 
-  sim.create_core()
-  sim.create_winding()
+    except Exception as e:
+      print(f"error {e}, retry")
+      np.random.seed((peets_global_rand_seed := int(time.time_ns() % (2**32))))
+    else:
+      break
 
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
