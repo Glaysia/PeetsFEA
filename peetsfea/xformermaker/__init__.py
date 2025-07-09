@@ -1,4 +1,11 @@
 # peetsfea/xformermaker/__init__.py
-from .xformermaker import Project1_EE_Plana_Plana_2Series, XformerMakerInterface
+from .xformermaker import XformerMakerInterface
+from .xformermaker import XformerType, XEnum
+from .xformermaker import seed as peets_global_rand_seed
 
-__all__ = ["Project1_EE_Plana_Plana_2Series", "XformerMakerInterface"]
+
+__all__ = [
+  "XformerMakerInterface",
+  "XEnum", "XformerType",
+  "peets_global_rand_seed"
+]
