@@ -52,8 +52,8 @@ class CoreBuilder:
         material="ferrite"
     )
 
-    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["(l1_leg)", "(w1)", "(g2)"]
+    origin = ["-(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g1)/2"]
+    dimension = ["(l1_leg)", "(w1)", "(g1)"]
     self.o3ds["core_sub_g1"] = self._create_box(
         origin=origin,
         sizes=dimension,
@@ -61,8 +61,8 @@ class CoreBuilder:
         material=self.mat
     )
 
-    origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["-(l1_leg)", "(w1)", "(g2)"]
+    origin = ["(2*l1_leg+2*l2+2*l2_tap+l1_center)/2", "-(w1)/2", "-(g1)/2"]
+    dimension = ["-(l1_leg)", "(w1)", "(g1)"]
     self.o3ds["core_sub_g2"] = self._create_box(
         origin=origin,
         sizes=dimension,
@@ -70,8 +70,8 @@ class CoreBuilder:
         material=self.mat
       )
 
-    origin = ["-l1_center/2", "-(w1)/2", "-(g2)/2"]
-    dimension = ["l1_center", "w1", "g2"]
+    origin = ["-l1_center/2", "-(w1)/2", "-(g1)/2"]
+    dimension = ["l1_center", "w1", "g1"]
     self.o3ds["core_unite_sub_g1"] = self._create_box(
         origin=origin,
         sizes=dimension,
