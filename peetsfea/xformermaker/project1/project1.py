@@ -127,10 +127,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     r = self.r
     v: dict[str, float] = self.v
     self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
+    AedtHandler.log(f"랜덤시드validate_variable_4Core {peets_global_rand_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
-    timeout_sec = 500
+    timeout_sec = 10
 
     while (True):
       # AedtHandler.log(str(self.v))
@@ -220,10 +220,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     r = self.r
     v: dict[str, float] = self.v
     self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
+    AedtHandler.log(f"랜덤시드validate_variable_4Tx {peets_global_rand_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
-    timeout_sec = 500
+    timeout_sec = 10
     w1_ratio = float(AedtHandler.peets_m3d.get_evaluated_value("w1_ratio"))
     while (True):
       # AedtHandler.log(str(self.v))
@@ -302,10 +302,10 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     r = self.r
     v: dict[str, float] = self.v
     self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드 {peets_global_rand_seed}")
+    AedtHandler.log(f"랜덤시드validate_variable_4Rx {peets_global_rand_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
-    timeout_sec = 500
+    timeout_sec = 10
 
     while (True):
       # AedtHandler.log(str(self.v))
@@ -394,7 +394,13 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     builder.build()
 
   def create_winding(self) -> None:
+    start = time.monotonic()  # 시작 시각 기록
+    timeout_sec = 30
     while True:
+      if time.monotonic() - start > timeout_sec:
+        raise Exception(
+            f"create_winding() timed out after {timeout_sec} seconds")
+
       try:
         for k, v in self.o3ds.items():
           if "Tx" in k or "Rx" in k:
@@ -445,7 +451,16 @@ if __name__ == "__main__":
     parr_idx: str = str(sys.argv[0])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
+
+  sim: Project1_EE_Plana_Plana_2Series
+
+  start = time.monotonic()  # 시작 시각 기록
+  timeout_sec = 300
   while True:
+    if time.monotonic() - start > timeout_sec:
+      print(f"error , retry")
+      np.random.seed((peets_global_rand_seed := int(time.time_ns() % (2**32))))
+
     try:
       sim = Project1_EE_Plana_Plana_2Series(
           name=name, aedt_dir=aedt_dir, new_desktop=False)
