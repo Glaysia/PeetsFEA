@@ -28,11 +28,11 @@ class WindingBuilder:
 
     AedtHandler.peets_m3d[f"{coil}_hTurns"] = int(self.v[f"{coil}_turns"]) // 2
 
-    START_X = f"(-({coil}_hTurns * {coil}_space_x + {coil}_width + l1_center/2 - 0.5*{coil}_width))"
-    START_Y = f"({coil}_hTurns * {coil}_space_y + {coil}_width + w1/2 - 0.5*{coil}_width)"
+    START_X = f"(({coil}_hTurns * {coil}_space_x + {coil}_width + l1_center/2 - 0.5*{coil}_width))"
+    START_Y = f"(-({coil}_hTurns * {coil}_space_y + {coil}_width + w1/2 - 0.5*{coil}_width))"
     START_Z = f"0"
     points = [
-      ["l1_center+100mm", START_Y, START_Z],
+      [START_X, "w1+100mm", START_Z],
       [START_X, START_Y, START_Z]
     ]
 
@@ -87,29 +87,29 @@ class WindingBuilder:
     for _ in range(turn):
       if _ % 2 == 0:
         last = points[-1]
-        points.append(flip(last, 'y'))
+        points.append(flip(last, 'x'))
 
         last = points[-1]
-        points.append(flip(last, 'x'))
+        points.append(flip(last, 'y'))
       else:
         last = points[-1]
-        points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
+        points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
 
         last = points[-1]
-        points.append(flip(shrink(last, 'x', f"{coil}_space_{'x'}"), 'x'))
+        points.append(flip(shrink(last, 'y', f"{coil}_space_{'y'}"), 'y'))
 
     last = points[-1]
     sign = "+" if is_turn_odd else "-"
     msign = "-" if is_turn_odd else "+"
     points.append(
-      shrink(last, 'y', f'{abs_exp(last[1])} - 1.5*{coil}_width'))
+      shrink(last, 'x', f'{abs_exp(last[0])} - 1.5*{coil}_width'))
 
     points_connect = []
     last_x, last_y, last_z = points[-1]
     points_connect.append(
-      [last_x, 0, from_expression(f"{last_z}-({coil}_height/2)")])
+      [0, last_y, from_expression(f"{last_z}-({coil}_height/2)")])
     points_connect.append(
-      [last_x, 0, from_expression(f"{last_z}+({coil}_height/2)")])
+      [0, last_y, from_expression(f"{last_z}+({coil}_height/2)")])
 
     o3ds = self.o3ds
 
@@ -125,7 +125,7 @@ class WindingBuilder:
       assignment=f"{coil_name}_2")
     self.modeler.mirror(
       assignment=o3ds[f'{coil_name}_2'],
-      origin=[0, 0, 0], vector=[0, 1, 0]
+      origin=[0, 0, 0], vector=[1, 0, 0]
     )
     self.modeler.move(
       assignment=o3ds[f'{coil_name}_2'],
@@ -146,7 +146,7 @@ class WindingBuilder:
     if mirrorX:
       self.modeler.mirror(
         assignment=o3ds[f'{coil_name}_1'],
-        origin=[0, 0, 0], vector=[1, 0, 0]
+        origin=[0, 0, 0], vector=[0, 1, 0]
       )
 
     if second != None and second == False:
