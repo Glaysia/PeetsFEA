@@ -178,6 +178,13 @@ class XformerMakerInterface(ABC):
 
     return self._coil_types_template
 
+  def set_analysis(self, freq_kHz):
+    setup = AedtHandler.peets_m3d.create_setup(setupname="Setup1")
+    setup.props["MaximumPasses"] = 10
+    setup.props["MinimumPasses"] = 2
+    setup.props["PercentError"] = 5
+    setup.props["Frequency"] = f'{freq_kHz}kHz'
+
   def set_material(self) -> None:
     self.mat: Material | Literal[False] = AedtHandler.peets_m3d.materials.duplicate_material(  # type: ignore
       material="ferrite", name="ferrite_simulation")

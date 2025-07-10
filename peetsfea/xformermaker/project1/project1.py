@@ -434,7 +434,19 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     pass
 
   def assign_mesh(self) -> None:
-    pass
+    temp_list = list()
+    temp_list.append(f"Tx_1")
+    temp_list.append(f"Rx_True_True_1")
+    temp_list.append(f"Rx_False_True_1")
+    skindepth = f"{math.sqrt(1.7*10**(-8)/math.pi/140/10**3/0.999991/4/math.pi/10**(-7))*10**3}mm"
+    mesh = AedtHandler.peets_m3d.mesh
+    if mesh is None:
+      raise AedtInitializationError
+
+    mesh.assign_skin_depth(
+      assignment=temp_list, skin_depth=skindepth,
+      triangulation_max_length="12.2mm"
+    )
 
 
 if __name__ == "__main__":
@@ -473,6 +485,7 @@ if __name__ == "__main__":
       sim.set_variable_byvalue(input_values=values)
       sim.set_variable_byrange(input_ranges=ranges)
       sim.set_material()
+      sim.set_analysis(sim.freq_khz)
 
       try:
         sim.validate_variable()
@@ -491,6 +504,9 @@ if __name__ == "__main__":
     else:
       break
 
+  sim.assign_mesh()
+  sim.create_region()
+  sim.create_exctation()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
