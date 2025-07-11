@@ -35,12 +35,14 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     ranges["l2_tap"] = [0, 0, 1, 0]
     ranges["ratio"] = [0.5, 0.50, 0.01, 2]
 
-    ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
+    # ranges["Tx_turns"] = [2, 14, 1, 0]  # rand TX
+    ranges["Tx_turns"] = [14, 14, 1, 0]  # rand TX
     ranges["Tx_tap"] = [2, 35, 1, 0]
     ranges["Tx_height"] = [0.035, 0.175, 0.035, 3]
     ranges["Tx_preg"] = [0.01, 0.1, 0.01, 2]
 
-    ranges["Rx_turns"] = [0, 1, 1, 0]  # rand RX
+    # ranges["Rx_turns"] = [0, 2, 1, 0]  # rand RX
+    ranges["Rx_turns"] = [2, 2, 1, 0]  # rand RX
     ranges["Rx_tap"] = [2, 35, 1, 0]
     ranges["Rx_height"] = [0.035, 0.175, 0.035, 3]
     ranges["Rx_preg"] = [0.01, 0.1, 0.01, 2]
