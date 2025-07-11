@@ -557,6 +557,63 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       triangulation_max_length="12.2mm"
     )
 
+  def _get_magnetic_report(self) -> None:
+    get_result_list = []
+    get_result_list.append(["Matrix1.L(Tx,Tx)", "Ltx"])
+    get_result_list.append(["Matrix1.L(Rx1,Rx1)", "Lrx1"])
+    get_result_list.append(["Matrix1.L(Rx2,Rx2)", "Lrx2"])
+    get_result_list.append(["Matrix1.L(Tx,Rx1)", "M1"])
+    get_result_list.append(["Matrix1.L(Tx,Rx2)", "M2"])
+    get_result_list.append(["Matrix1.CplCoef(Tx,Rx1)", "k1"])
+    get_result_list.append(["Matrix1.CplCoef(Tx,Rx2)", "k2"])
+    get_result_list.append(
+      ["Matrix1.L(Tx,Tx)*(Matrix1.CplCoef(Tx,Rx1)^2)", "Lmt"])
+    get_result_list.append(
+      ["Matrix1.L(Rx1,Rx1)*(Matrix1.CplCoef(Tx,Rx1)^2)", "Lmr1"])
+    get_result_list.append(
+      ["Matrix1.L(Rx2,Rx2)*(Matrix1.CplCoef(Tx,Rx2)^2)", "Lmr2"])
+    get_result_list.append(
+      ["Matrix1.L(Tx,Tx)*(1-Matrix1.CplCoef(Tx,Rx1)^2)", "Llt"])
+    get_result_list.append(
+      ["Matrix1.L(Rx1,Rx1)*(1-Matrix1.CplCoef(Tx,Rx1)^2)", "Llr1"])
+    get_result_list.append(
+      ["Matrix1.L(Rx2,Rx2)*(1-Matrix1.CplCoef(Tx,Rx2)^2)", "Llr2"])
+
+    result_expressions = [item[0] for item in get_result_list]
+
+    import tempfile
+    from ansys.aedt.core.visualization.report.standard import Standard
+    assert AedtHandler.peets_m3d.post, "post 안됨"
+
+    with tempfile.TemporaryDirectory(prefix="peetsfea_") as tmpdir:
+        # generate report as before
+      report = AedtHandler.peets_m3d.post.create_report(
+          expressions=result_expressions,
+          setup_sweep_name=None,
+          domain='Sweep',
+          variations=None,
+          primary_sweep_variable=None,
+          secondary_sweep_variable=None,
+          report_category=None,
+          plot_type='Data Table',
+          context=None,
+          subdesign_id=None,
+          polyline_points=1001,
+          plot_name="simulation parameter"
+      )  # type: ignore
+      report: Standard = report
+      assert report, "report 실패"
+      assert isinstance(report, Standard), "report 실패"
+      # export CSV into the temp folder
+      csv_path = AedtHandler.peets_m3d.post.export_report_to_csv(
+          project_dir=tmpdir,
+          plot_name=report.plot_name
+      )
+      print(csv_path)  # shows full path in tmpdir
+      # load the CSV
+      self.data1 = pd.read_csv(csv_path)
+      print(self.data1)
+
 
 if __name__ == "__main__":
   import os
@@ -621,6 +678,7 @@ if __name__ == "__main__":
 
   AedtHandler.peets_m3d.analyze_setup()
   AedtHandler.peets_m3d.analyze()
+  sim._get_magnetic_report()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
