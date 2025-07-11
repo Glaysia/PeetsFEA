@@ -7,7 +7,8 @@ from ansys.aedt.core.modules.boundary.common import BoundaryObject
 from ansys.aedt.core.modeler.cad.elements_3d import FacePrimitive, EdgePrimitive
 import numpy as np
 from peetsfea.xformermaker import XformerMakerInterface, \
-  XformerType, XEnum, peets_global_rand_seed
+  XformerType, XEnum
+from peetsfea.xformermaker import peets_global_rand_seed as global_seed
 from peetsfea.aedthandler import *
 
 
@@ -132,8 +133,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
   def validate_variable_4Core(self) -> None:
     r = self.r
     v: dict[str, float] = self.v
-    self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드validate_variable_4Core {peets_global_rand_seed}")
+    self.v['seed'] = global_seed
+    AedtHandler.log(f"랜덤시드validate_variable_4Core {global_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
     timeout_sec = 10
@@ -225,8 +226,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
   def validate_variable_4Tx(self) -> None:
     r = self.r
     v: dict[str, float] = self.v
-    self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드validate_variable_4Tx {peets_global_rand_seed}")
+    self.v['seed'] = global_seed
+    AedtHandler.log(f"랜덤시드validate_variable_4Tx {global_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
     timeout_sec = 10
@@ -307,8 +308,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
   def validate_variable_4Rx(self) -> None:
     r = self.r
     v: dict[str, float] = self.v
-    self.v['seed'] = peets_global_rand_seed
-    AedtHandler.log(f"랜덤시드validate_variable_4Rx {peets_global_rand_seed}")
+    self.v['seed'] = global_seed
+    AedtHandler.log(f"랜덤시드validate_variable_4Rx {global_seed}")
 
     start = time.monotonic()  # 시작 시각 기록
     timeout_sec = 10
@@ -422,8 +423,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       except Exception as e:
         if 'color' in str(e):
           print(f"error while create_winding {e}, retry")
-          peets_global_rand_seed = int(time.time_ns() % (2**32))
-          np.random.seed(peets_global_rand_seed)
+
+          self.set_random_seed()
         else:
           raise e
 
@@ -614,6 +615,22 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       self.data1 = pd.read_csv(csv_path)
       print(self.data1)
 
+  @staticmethod
+  def set_random_seed(seed=0, manual=False, is_manual: list = []):
+    global global_seed
+    if len(is_manual) != 0:
+      manual = True
+
+    if manual:
+      is_manual.append(True)
+      print(is_manual)
+      if seed != 0:
+        global_seed = seed
+    else:
+      global_seed = int(time.time_ns() % (2**32))
+
+    np.random.seed(global_seed)
+
 
 if __name__ == "__main__":
   import os
@@ -630,15 +647,17 @@ if __name__ == "__main__":
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
 
+  set_random_seed = Project1_EE_Plana_Plana_2Series.set_random_seed
+  set_random_seed(seed=3309586659, manual=True)
+  # set_random_seed()
+
   sim: Project1_EE_Plana_Plana_2Series
-  # peets_global_rand_seed = int(367771938)
-  # np.random.seed(peets_global_rand_seed)
   start = time.monotonic()  # 시작 시각 기록
   timeout_sec = 300
   while True:
     if time.monotonic() - start > timeout_sec:
       print(f"error , retry")
-      np.random.seed((peets_global_rand_seed := int(time.time_ns() % (2**32))))
+      set_random_seed()
 
     try:
       sim = Project1_EE_Plana_Plana_2Series(
@@ -672,7 +691,7 @@ if __name__ == "__main__":
 
     except Exception as e:
       print(f"error {e}, retry")
-      np.random.seed((peets_global_rand_seed := int(time.time_ns() % (2**32))))
+      sim.set_random_seed()  # type: ignore
     else:
       break
 
