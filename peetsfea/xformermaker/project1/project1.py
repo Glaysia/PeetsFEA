@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import math
 import time
@@ -11,6 +12,7 @@ from peetsfea.xformermaker import XformerMakerInterface, \
   XformerType, XEnum
 from peetsfea.xformermaker import peets_global_rand_seed as global_seed
 from peetsfea.aedthandler import *
+sim_globlal: list[XformerMakerInterface] = []
 
 
 class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
@@ -24,6 +26,9 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     self.per: int = 3000
     self.freq_khz: int = 140
     self.coils_main: list[str] = []
+
+    global sim_globlal
+    sim_globlal.append(self)
 
   def random_ranges(self) -> dict[str, list[float]]:
     ranges = {}
@@ -426,7 +431,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
         if 'color' in str(e):
           print(f"error while create_winding {e}, retry")
 
-          self.set_random_seed()
+          self.set_random_seed(e)
         else:
           raise e
 
@@ -589,7 +594,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     assert AedtHandler.peets_m3d.post, "post 안됨"
 
     with tempfile.TemporaryDirectory(prefix="peetsfea_") as tmpdir:
-        # generate report as before
+      # generate report as before
       report = AedtHandler.peets_m3d.post.create_report(
           expressions=result_expressions,
           setup_sweep_name=None,
@@ -618,7 +623,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       print(self.data1)
 
   @staticmethod
-  def set_random_seed(seed=0, manual=False, is_manual: list = []):
+  def set_random_seed(exception: Exception | None = None, seed=0, manual=False, is_manual: list = []):
     global global_seed
     if len(is_manual) != 0:
       manual = True
@@ -632,6 +637,27 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       global_seed = int(time.time_ns() % (2**32))
 
     np.random.seed(global_seed)
+    import tempfile
+    import uuid
+    import json
+    global sim_globlal
+
+    base_tmp = Path("./tmp")
+    base_tmp.mkdir(exist_ok=True)
+
+    if len(sim_globlal) != 0:
+      sim: None | XformerMakerInterface = sim_globlal[0]
+    else:
+      sim = None
+    data = getattr(sim, "__dict__", {})
+    data['exception'] = exception
+
+    unique_name = f"sim_dict_{uuid.uuid4().hex}.json"
+    json_path = os.path.join(base_tmp, unique_name)
+    with open(json_path, "w") as f:
+      json.dump(data, f, default=lambda o: repr(o), indent=2)
+
+    print("saved JSON to", json_path)
 
 
 if __name__ == "__main__":
@@ -659,7 +685,7 @@ if __name__ == "__main__":
   while True:
     if time.monotonic() - start > timeout_sec:
       print(f"error , retry")
-      set_random_seed()
+      set_random_seed(TimeoutError("300초 타임아웃"))
 
     try:
       sim = Project1_EE_Plana_Plana_2Series(
@@ -693,13 +719,13 @@ if __name__ == "__main__":
 
     except Exception as e:
       print(f"error {e}, retry")
-      sim.set_random_seed()  # type: ignore
+      set_random_seed(e)
     else:
       break
 
-  AedtHandler.peets_m3d.analyze_setup()
-  AedtHandler.peets_m3d.analyze()
-  sim._get_magnetic_report()
+  # AedtHandler.peets_m3d.analyze_setup()
+  # AedtHandler.peets_m3d.analyze()
+  # sim._get_magnetic_report()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
