@@ -152,13 +152,13 @@ class WindingBuilder:
     if second != None and second == False:
       self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
-        vector=["0mm", "0mm", f"g2+{coil}_height/2"]
+        vector=["0mm", "0mm", f"g2+Tx_height/0.7"]
       )
 
     if second != None and second == True:
       self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
-        vector=["0mm", "0mm", f"-g2-{coil}_height/2"]
+        vector=["0mm", "0mm", f"-g2-Tx_height/0.7"]
       )
 
     AedtHandler.log(f"Winding{coil_name} 생성 완료")
