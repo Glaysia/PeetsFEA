@@ -20,7 +20,7 @@ class WindingBuilder:
     self.v = variables
     self.o3ds = o3ds
 
-  def build(self, coil: str, second=None, mirrorX=None):
+  def build(self, coil: str, second=None, mirrorX=None) -> str:
     if second != None or mirrorX != None:
       coil_name = f"{coil}_{second}_{mirrorX}"
     else:
@@ -162,3 +162,4 @@ class WindingBuilder:
       )
 
     AedtHandler.log(f"Winding{coil_name} 생성 완료")
+    return f'{coil_name}_1'
