@@ -1,7 +1,10 @@
 import math
 import time
 from typing import Iterator, Sequence
+from ansys.aedt.core.maxwell import Maxwell3d
 from ansys.aedt.core.modeler.cad.object_3d import Object3d
+from ansys.aedt.core.modules.boundary.common import BoundaryObject
+from ansys.aedt.core.modeler.cad.elements_3d import FacePrimitive, EdgePrimitive
 import numpy as np
 from peetsfea.xformermaker import XformerMakerInterface, \
   XformerType, XEnum, peets_global_rand_seed
@@ -428,10 +431,113 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     from peetsfea.xformermaker.project1 import WindingBuilder4Project1
     builder = WindingBuilder4Project1(
       self.modeler, self._create_polyline, self.v, self.o3ds)
-    builder.build(coil, second, mirrorX)
+    coil_name = builder.build(coil, second, mirrorX)
+    self.coils_main.append(coil_name)
 
   def create_exctation(self) -> None:
-    pass
+    # o3ds = self.o3ds
+    terminals: dict[str, int] = {}
+    faces = {}
+
+    for i in self.coils_main:  # ['Tx_1', 'Rx_False_True_1', 'Rx_True_True_1']
+      def get_face_coo(face_id: int):
+        face: FacePrimitive = self.modeler.get_face_by_id(
+          face_id)  # type: ignore
+        center: list[float] = face.center  # type: ignore
+
+        return (face_id, center)
+
+      # [(1,[1.1,1.1,2.2]),(1,[1.1,1.1,2.2]),(1,[1.1,1.1,2.2]),]
+      faces[i] = map(get_face_coo, self.modeler.get_object_faces(assignment=i))
+
+    def my_sort(k: str, value: list[tuple[int, list[float]]]):
+      reverse = 'Tx' in k
+      return sorted(value, key=lambda pair: pair[1][1], reverse=reverse)[:2]
+
+    faces = {k: my_sort(k, v) for k, v in faces.items()}
+    M3D: Maxwell3d = AedtHandler.peets_m3d
+
+    (face_a_id, face_a_center), (
+      face_b_id, face_b_center) = faces['Tx_1']
+
+    if face_b_center[0] < 0:
+      Tx_1_i, Tx_1_o = face_b_id, face_a_id
+    else:
+      Tx_1_i, Tx_1_o = face_a_id, face_b_id
+
+    (face_a_id, face_a_center), (
+      face_b_id, face_b_center) = faces['Rx_False_True_1']
+
+    if face_b_center[0] < 0:
+      Rx_1_i, Rx_1_o = face_b_id, face_a_id
+    else:
+      Rx_1_i, Rx_1_o = face_a_id, face_b_id
+
+    (face_a_id, face_a_center), (
+      face_b_id, face_b_center) = faces['Rx_True_True_1']
+
+    if face_b_center[0] < 0:
+      Rx_2_i, Rx_2_o = face_b_id, face_a_id
+    else:
+      Rx_2_i, Rx_2_o = face_a_id, face_b_id
+
+    M3D.assign_coil(
+      assignment=Tx_1_i, conductors_number=1,
+      polarity='Positive', name='Tx_1_icoil'
+    )
+    M3D.assign_coil(
+      assignment=Tx_1_o, conductors_number=1,
+      polarity='Negative', name='Tx_1_ocoil'
+    )
+
+    M3D.assign_coil(
+      assignment=Rx_1_i, conductors_number=1,
+      polarity='Positive', name='Rx_1_icoil'
+    )
+    M3D.assign_coil(
+      assignment=Rx_1_o, conductors_number=1,
+      polarity='Negative', name='Rx_1_ocoil'
+    )
+
+    M3D.assign_coil(
+      assignment=Rx_2_i, conductors_number=1,
+      polarity='Positive', name='Rx_2_icoil'
+    )
+    M3D.assign_coil(
+      assignment=Rx_2_o, conductors_number=1,
+      polarity='Negative', name='Rx_2_ocoil'
+    )
+
+    Tx1_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=4.2, name="Tx1"  # type: ignore
+    )
+    Rx1_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=12.6, name="Rx1"  # type: ignore
+    )
+    Rx2_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=0.0, name="Rx2"  # type: ignore
+    )
+    assert Tx1_winding, "assign_winding failed Tx1_winding"
+    assert Rx1_winding, "assign_winding failed Rx1_winding"
+    assert Rx2_winding, "assign_winding failed Rx2_winding"
+
+    M3D.add_winding_coils(
+        assignment=Tx1_winding.name,
+        coils=['Tx_1_icoil', 'Tx_1_ocoil'],
+      )
+    M3D.add_winding_coils(
+        assignment=Rx1_winding.name,
+        coils=['Rx_1_icoil', 'Rx_1_ocoil'],
+      )
+    M3D.add_winding_coils(
+        assignment=Rx2_winding.name,
+        coils=['Rx_2_icoil', 'Rx_2_ocoil'],
+      )
+
+    M3D.assign_matrix(
+      assignment=[Tx1_winding.name, Rx1_winding.name, Rx2_winding.name],
+      matrix_name="Matrix1"
+    )
 
   def assign_mesh(self) -> None:
     temp_list = list()
@@ -465,7 +571,8 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
 
   sim: Project1_EE_Plana_Plana_2Series
-
+  # peets_global_rand_seed = int(367771938)
+  # np.random.seed(peets_global_rand_seed)
   start = time.monotonic()  # 시작 시각 기록
   timeout_sec = 300
   while True:
