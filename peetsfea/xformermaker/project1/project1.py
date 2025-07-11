@@ -1,3 +1,4 @@
+import pandas as pd
 import math
 import time
 from typing import Iterator, Sequence
@@ -145,7 +146,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       if time.monotonic() - start > timeout_sec:
         self.is_validated = True
         self.create_core()
-        raise RuntimeError(
+        raise TimeoutError(
             f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
       # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
       #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
@@ -238,7 +239,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       if time.monotonic() - start > timeout_sec:
         self.is_validated = True
         self.create_core()
-        raise RuntimeError(
+        raise TimeoutError(
             f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
       # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
       #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
@@ -320,7 +321,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       if time.monotonic() - start > timeout_sec:
         self.is_validated = True
         self.create_core()
-        raise RuntimeError(
+        raise TimeoutError(
             f"validate_variable() timed out after {timeout_sec} seconds\nself.v: {self.v}")
       # if self.v["Tx_height"] * 2 + self.v["Tx_preg"] * 2 + self.v["Rx_height"] * 4 + self.v["Rx_preg"] * 4 >= self.v["h1"]:
       #   self.v["Tx_height"] = self._random_choice(r["Tx_height"])
@@ -389,7 +390,8 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
   def create_core(self) -> None:
     if not hasattr(self, "mat"):
-      raise RuntimeError("set_material() must be called before create_core()")
+      raise AttributeError(
+        "set_material() must be called before create_core()")
 
     if not self.is_validated:
       raise RuntimeError(
