@@ -21,6 +21,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
+    self.coils_main: list[str] = []
 
   def random_ranges(self) -> dict[str, list[float]]:
     ranges = {}
@@ -606,6 +607,11 @@ if __name__ == "__main__":
 
       sim.create_core()
       sim.create_winding()
+      sim.assign_mesh()
+      sim.create_region()
+      sim.create_exctation()
+      validity = AedtHandler.peets_m3d.validate_simple() == 1
+      assert validity, "디자인이 잘못 만들어짐"
 
     except Exception as e:
       print(f"error {e}, retry")
@@ -613,9 +619,8 @@ if __name__ == "__main__":
     else:
       break
 
-  sim.assign_mesh()
-  sim.create_region()
-  sim.create_exctation()
+  AedtHandler.peets_m3d.analyze_setup()
+  AedtHandler.peets_m3d.analyze()
   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
   # x.set_material()
   # AedtHandler.initialize(
