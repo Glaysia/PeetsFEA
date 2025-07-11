@@ -288,7 +288,7 @@ class XformerMakerInterface(ABC):
   def create_region(self) -> None:
 
     region: Point | Plane | Object3d | Literal[False] = self.modeler.create_air_region(
-      z_pos="800", z_neg="800", y_pos="300", y_neg="300", x_pos="0", x_neg="0")  # type: ignore
+      z_pos="800", z_neg="800", y_pos="0", y_neg="0", x_pos="300", x_neg="300")  # type: ignore
 
     AedtHandler.peets_m3d.assign_material(assignment=region, material="vacuum")
     region_face = self.modeler.get_object_faces("Region")
