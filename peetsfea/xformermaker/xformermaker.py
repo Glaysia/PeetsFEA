@@ -222,18 +222,20 @@ class XformerMakerInterface(ABC):
   def create_exctation(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
-  def _create_polyline(self, points, name, coil_width, coil_height) -> Polyline:
-    polyline_obj: Polyline = self.modeler.create_polyline(
-        points,
-        name=name,
-        material="copper",
-        xsection_type="Rectangle",
-        xsection_width=coil_width,
-        xsection_height=coil_height)
+  def _create_polyline(self, points:list[str], name:str, coil_width:str, coil_height:str) -> Polyline:
+    polyline_obj: Polyline|Any = self.modeler.create_polyline( # type: ignore
+      points,
+      name=name,
+      material="copper",
+      xsection_type="Rectangle",
+      xsection_width=coil_width, # type: ignore
+      xsection_height=coil_height # type: ignore
+    )
+    assert polyline_obj, "create_polyline failed"
 
     return polyline_obj
 
-  def _create_box(self, origin, sizes, name=None, material=None, *args, **kwargs) -> Object3d:
+  def _create_box(self, origin, sizes, name=None, material=None, *args, **kwargs) -> Object3d: # type: ignore
     """Create a box.
 
       Parameters
@@ -277,24 +279,30 @@ class XformerMakerInterface(ABC):
       >>> box_object = hfss.modeler.create_box(origin=origin, sizes=dimensions, name="mybox", material="copper")
 
       """
-    ret: Point | Plane | Object3d | Literal[False] = self.modeler.create_box(
-      origin, sizes, name, material, *args, **kwargs, **kwargs)
-    if not isinstance(ret, Object3d):
-      raise RuntimeError(
-        f"[PeetsFEA] create_box failed: expected Object3d, got {type(ret).__name__}")
+    ret: Object3d | Any = self.modeler.create_box( # type: ignore
+      origin, sizes, name, material, *args, **kwargs, **kwargs) # type: ignore
+    
+    assert isinstance(ret, Object3d), f"[PeetsFEA] create_box failed: expected Object3d, got {type(ret).__name__}"
 
     return ret
 
   def create_region(self) -> None:
 
-    region: Point | Plane | Object3d | Literal[False] = self.modeler.create_air_region(
+    region:  Object3d | Any = self.modeler.create_air_region(
       z_pos="800", z_neg="800", y_pos="0", y_neg="0", x_pos="300", x_neg="300")  # type: ignore
+    assert isinstance(region, Object3d), f"[PeetsFEA] create_air_region failed: expected Object3d, got {type(region).__name__}"
 
-    AedtHandler.peets_m3d.assign_material(assignment=region, material="vacuum")
-    region_face = self.modeler.get_object_faces("Region")
+
+    is_assign_material_success :bool= AedtHandler.peets_m3d.assign_material(assignment=region, material="vacuum") # type: ignore
+    assert is_assign_material_success, f"[PeetsFEA] assign_material failed"
+
+
+    region_face = self.modeler.get_object_faces("Region") # type: ignore
     # region_face
-    AedtHandler.peets_m3d.assign_radiation(
+    is_assign_radiation_successed:Literal[False]|Any = AedtHandler.peets_m3d.assign_radiation( # type: ignore
       assignment=region_face, radiation="Radiation")
+    
+    assert is_assign_radiation_successed !=False, f"[PeetsFEA] assign_radiation failed"
 
   @abstractmethod
   def assign_mesh(self) -> None:
