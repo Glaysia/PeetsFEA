@@ -2,10 +2,13 @@ import sys
 from operator import itemgetter
 from dataclasses import dataclass
 from enum import Enum
+import pandas as pd
 import math
 import time
 from typing import Any, Iterator, Literal, Sequence, TypedDict, cast
 from abc import ABC, abstractmethod
+from pathlib import Path
+import numpy as np
 
 from ansys.aedt.core.maxwell import Maxwell3d
 from ansys.aedt.core.modeler.cad.elements_3d import Plane, Point
@@ -13,17 +16,15 @@ from ansys.aedt.core.modeler.cad.object_3d import Object3d
 from ansys.aedt.core.modeler.cad.polylines import Polyline
 from ansys.aedt.core.modeler.modeler_2d import Modeler2D
 from ansys.aedt.core.modeler.modeler_3d import Modeler3D
-
-from peetsfea.aedthandler import AedtHandler, AedtInitializationError
 from ansys.aedt.core.modules.material_lib import Materials
 from ansys.aedt.core.generic.constants import SOLUTIONS
 from ansys.aedt.core.modules.material import Material
 from ansys.aedt.core.modules.solve_setup import SetupMaxwell
 from ansys.aedt.core.modules.solve_sweeps import SetupProps
-from pathlib import Path
+from ansys.aedt.core.visualization.post.post_maxwell import PostProcessorMaxwell
 
-import numpy as np
 
+from peetsfea.aedthandler import AedtHandler, AedtInitializationError
 
 # np.random.seed(123)  # E38_8_25
 # np.random.seed(1)  # E20_10_5

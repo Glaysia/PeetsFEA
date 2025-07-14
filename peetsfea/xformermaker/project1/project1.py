@@ -1,4 +1,3 @@
-from pathlib import Path
 import pandas as pd
 import numpy as np
 import os
@@ -641,13 +640,13 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     import tempfile
     import uuid
     import json
-    global sim_globlal
+    global sim_global
 
     base_tmp = Path("./tmp")
     base_tmp.mkdir(exist_ok=True)
 
-    if len(sim_globlal) != 0:
-      sim: None | XformerMakerInterface = sim_globlal[0]
+    if len(sim_global) != 0:
+      sim: None | XformerMakerInterface = sim_global[0]
     else:
       sim = None
     data = getattr(sim, "__dict__", {})

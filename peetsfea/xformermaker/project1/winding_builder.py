@@ -123,6 +123,8 @@ class WindingBuilder:
     self.modeler.paste()
     o3ds[f'{coil_name}_2'] = self.modeler.get_object_from_name(  # type: ignore
       assignment=f"{coil_name}_2")
+    tmp = o3ds[f'{coil_name}_2']
+    assert not (tmp is None), f"{f'{coil_name}_2 key error'}"
     self.modeler.mirror(
       assignment=o3ds[f'{coil_name}_2'],
       origin=[0, 0, 0], vector=[1, 0, 0]
