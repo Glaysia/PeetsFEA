@@ -115,47 +115,17 @@ class AedtHandler:
       return pid
 
   @classmethod
-  def open_aedt(cls, new_desktop=False) -> int:
+  def open_aedt(cls, new_desktop=False, close_on_exit=True) -> int:
     """
     *주의 만약 여러개가 켜져있다면 하나의 aedt를 빼고 모두 종료합니다.
     peets의 aedt의 pid를 반환합니다.
     pid를 입력받으면 종료하지 않고 해당 pid의 aedt로 부착됩니다.
     """
     aedt = Desktop(
-        new_desktop=new_desktop, close_on_exit=False, student_version=False,
+        new_desktop=new_desktop, close_on_exit=close_on_exit, student_version=False,
     )
     cls.peets_aedt = aedt
     return aedt.aedt_process_id
-    # pids: Sequence[int] = cls.get_aedt_pids()
-    # if len(pids) > 0:
-    #   cls.peets_aedt_pid = aedt_pid if aedt_pid else pids[0]
-    #   if not (aedt_pid in pids):
-    #     aedt = Desktop(
-    #         non_graphical=False, new_desktop=True,
-    #         close_on_exit=False, student_version=False)
-    #     cls.peets_aedt = aedt
-    #     return aedt.aedt_process_id
-
-    #   for pid in pids:
-    #     with PeetsLogSetter(pid):
-    #       if pid == cls.peets_aedt_pid:
-    #         aedt = Desktop(
-    #           non_graphical=False, new_desktop=False,
-    #           close_on_exit=False, student_version=False, aedt_process_id=pid)
-    #         cls.peets_aedt = aedt
-    #         return pid
-    #       else:
-    #         # Desktop(new_desktop=False, aedt_process_id=pid).close_desktop()
-    #         pass
-    #   return cls.peets_aedt_pid
-    # else:
-    #   aedt = Desktop(
-    #     new_desktop=True, close_on_exit=False, student_version=False,
-    #   )
-    #   cls.peets_aedt = aedt
-    #   pid: int = cls.get_aedt_pid()
-    #   PeetsLogSetter(pid).setlogger(pid)
-    #   return pid
 
   @classmethod
   def get_aedt_pids(cls) -> Sequence[int]:
@@ -189,11 +159,11 @@ class AedtHandler:
 
     try:
       cls.peets_m3d = Maxwell3d(
-        project=cls.project_name,
+        # project=cls.project_name,
         design=cls.design_name,
         solution_type=cls.solution_type,
-        new_desktop=False, close_on_exit=False,
-        student_version=False, aedt_process_id=cls.peets_aedt_pid
+        new_desktop=False, student_version=False,
+        aedt_process_id=cls.peets_aedt_pid
       )
 
     except Exception as e:
@@ -271,7 +241,8 @@ class AedtHandler:
     project_path: Path = Path.home().joinpath("peets_aipd").absolute(),
     design_name: str = "AIPDDesign",
     sol_type: str = SOLUTIONS.Maxwell3d.EddyCurrent,
-    new_desktop: bool = False
+    new_desktop: bool = False,
+    close_on_desktop: bool = True
   ) -> None:
     """
     aedt를 초기화 합니다.
@@ -284,7 +255,7 @@ class AedtHandler:
     # print(dir(AedtHandler))
     cls.tmp = cls.project_name
     cls.project_name = "tmp"
-    cls.open_aedt(new_desktop)
+    cls.open_aedt(new_desktop, close_on_exit=close_on_desktop)
     pid: int = cls.get_aedt_pid()
     PeetsLogSetter(pid).setlogger(pid)
     print(f"프로젝트 저장 여부:{cls.open_project()}")
@@ -318,8 +289,8 @@ if __name__ == '__main__':
     project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
     design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
   )
-  AedtHandler.peets_aedt.close_desktop()
-  AedtHandler.close_all_aedt()
+  # AedtHandler.peets_aedt.close_desktop()
+  # AedtHandler.close_all_aedt()
   # c1 = Coil()
   # coil_shape: dict[str, float] = {k: 1.0 for k in Coil.get_template()[
   #     CoilTypeEnum.EIPlanaPlana2Series]["coil_keys"]}
