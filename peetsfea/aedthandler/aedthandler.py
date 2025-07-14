@@ -115,7 +115,7 @@ class AedtHandler:
       return pid
 
   @classmethod
-  def open_aedt(cls, new_desktop=False, close_on_exit=True) -> int:
+  def open_aedt(cls, new_desktop=False, close_on_exit=True, non_graphical=False) -> int:
     """
     *주의 만약 여러개가 켜져있다면 하나의 aedt를 빼고 모두 종료합니다.
     peets의 aedt의 pid를 반환합니다.
@@ -123,6 +123,7 @@ class AedtHandler:
     """
     aedt = Desktop(
         new_desktop=new_desktop, close_on_exit=close_on_exit, student_version=False,
+        non_graphical=non_graphical
     )
     cls.peets_aedt = aedt
     return aedt.aedt_process_id
@@ -242,7 +243,8 @@ class AedtHandler:
     design_name: str = "AIPDDesign",
     sol_type: str = SOLUTIONS.Maxwell3d.EddyCurrent,
     new_desktop: bool = False,
-    close_on_desktop: bool = True
+    close_on_desktop: bool = True,
+    non_graphical: bool = False
   ) -> None:
     """
     aedt를 초기화 합니다.
@@ -255,7 +257,11 @@ class AedtHandler:
     # print(dir(AedtHandler))
     cls.tmp = cls.project_name
     cls.project_name = "tmp"
-    cls.open_aedt(new_desktop, close_on_exit=close_on_desktop)
+    cls.open_aedt(
+      new_desktop=new_desktop,
+      close_on_exit=close_on_desktop,
+      non_graphical=non_graphical
+    )
     pid: int = cls.get_aedt_pid()
     PeetsLogSetter(pid).setlogger(pid)
     print(f"프로젝트 저장 여부:{cls.open_project()}")

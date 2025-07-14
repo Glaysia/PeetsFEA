@@ -1,3 +1,4 @@
+import functools
 import sys
 from operator import itemgetter
 from dataclasses import dataclass
@@ -14,8 +15,8 @@ from ansys.aedt.core.maxwell import Maxwell3d
 from ansys.aedt.core.modeler.cad.elements_3d import Plane, Point
 from ansys.aedt.core.modeler.cad.object_3d import Object3d
 from ansys.aedt.core.modeler.cad.polylines import Polyline
-from ansys.aedt.core.modeler.modeler_2d import Modeler2D
 from ansys.aedt.core.modeler.modeler_3d import Modeler3D
+from ansys.aedt.core.modeler.modeler_2d import Modeler2D
 from ansys.aedt.core.modules.material_lib import Materials
 from ansys.aedt.core.generic.constants import SOLUTIONS
 from ansys.aedt.core.modules.material import Material
@@ -25,6 +26,7 @@ from ansys.aedt.core.visualization.post.post_maxwell import PostProcessorMaxwell
 
 
 from peetsfea.aedthandler import AedtHandler, AedtInitializationError
+
 
 # np.random.seed(123)  # E38_8_25
 # np.random.seed(1)  # E20_10_5
@@ -76,25 +78,26 @@ class XformerEntry(TypedDict):
 
 
 class XformerMakerInterface(ABC):
-  def __init__(self, name: str, aedt_dir: str, new_desktop: bool) -> None:
+  def __init__(
+    self, name: str, aedt_dir: str,
+    new_desktop: bool,
+    non_graphical: bool
+  ) -> None:
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
     self.is_validated: bool = False
     self.data = {}
     self.o3ds: dict[str, Object3d] = {}
+    self.progress: str = ""
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,
-      new_desktop=new_desktop
+      new_desktop=new_desktop, close_on_desktop=True, non_graphical=non_graphical
     )
-
-    if not isinstance(AedtHandler.peets_m3d.modeler, Modeler3D):
-      raise AedtInitializationError("[PeetsFEA] AedtHandler is not intialized")
-
-    self.modeler: Modeler3D = AedtHandler.peets_m3d.modeler
-
-    assert self.modeler, "[PeetsFEA] modeler failed"
+    _modeler: Modeler2D | Modeler3D | None = AedtHandler.peets_m3d.modeler
+    assert isinstance(_modeler, Modeler3D), "modeler initialization failed"
+    self.modeler: Modeler3D = _modeler
 
   def _random_choice(self, X: list[float]) -> float:
     """
@@ -221,7 +224,7 @@ class XformerMakerInterface(ABC):
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   @abstractmethod
-  def create_exctation(self) -> None:
+  def create_excitation(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
   def _create_polyline(self, points, name, coil_width, coil_height) -> Polyline:
@@ -232,6 +235,8 @@ class XformerMakerInterface(ABC):
         xsection_type="Rectangle",
         xsection_width=coil_width,
         xsection_height=coil_height)
+
+    assert polyline_obj, "create_polyline"
 
     return polyline_obj
 
