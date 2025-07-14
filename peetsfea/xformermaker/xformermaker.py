@@ -301,4 +301,21 @@ class XformerMakerInterface(ABC):
   def assign_mesh(self) -> None:
     raise NotImplementedError("이건 인터페이스 클래스입니다. 상속받아서 내부를 작성해주세요")
 
-  # def
+  def export_report_to_csv(self, plot_name):
+    import tempfile
+    ret: str
+    with tempfile.TemporaryDirectory(prefix="peetsfea_") as tmpdir:
+      assert isinstance(AedtHandler.peets_m3d.post, PostProcessorMaxwell)
+      csv_path = AedtHandler.peets_m3d.post.export_report_to_csv(
+          project_dir=tmpdir,
+          plot_name=plot_name
+      )
+      assert csv_path, "export_report_to_csv failed"
+      ret = csv_path
+      print(csv_path)  # shows full path in tmpdir
+      # load the CSV
+
+      self.data[plot_name] = pd.read_csv(csv_path)
+
+  def delete_all(self):
+    AedtHandler.peets_m3d.delete_design()

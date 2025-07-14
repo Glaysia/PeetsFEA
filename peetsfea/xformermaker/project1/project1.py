@@ -598,34 +598,30 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     from ansys.aedt.core.visualization.report.standard import Standard
     assert AedtHandler.peets_m3d.post, "post 안됨"
 
-    with tempfile.TemporaryDirectory(prefix="peetsfea_") as tmpdir:
-      # generate report as before
-      report = AedtHandler.peets_m3d.post.create_report(
-          expressions=result_expressions,
-          setup_sweep_name=None,
-          domain='Sweep',
-          variations=None,
-          primary_sweep_variable=None,
-          secondary_sweep_variable=None,
-          report_category=None,
-          plot_type='Data Table',
-          context=None,
-          subdesign_id=None,
-          polyline_points=1001,
-          plot_name="simulation parameter"
-      )  # type: ignore
-      report: Standard = report
-      assert report, "report 실패"
-      assert isinstance(report, Standard), "report 실패"
-      # export CSV into the temp folder
-      csv_path = AedtHandler.peets_m3d.post.export_report_to_csv(
-          project_dir=tmpdir,
-          plot_name=report.plot_name
-      )
-      print(csv_path)  # shows full path in tmpdir
-      # load the CSV
-      self.data1 = pd.read_csv(csv_path)
-      print(self.data1)
+    report = AedtHandler.peets_m3d.post.create_report(
+        expressions=result_expressions,
+        setup_sweep_name=None,
+        domain='Sweep',
+        variations=None,
+        primary_sweep_variable=None,
+        secondary_sweep_variable=None,
+        report_category=None,
+        plot_type='Data Table',
+        context=None,
+        subdesign_id=None,
+        polyline_points=1001,
+        plot_name="simulation parameter"
+    )  # type: ignore
+    report: Standard = report
+    assert report, "report 실패"
+    assert isinstance(report, Standard), "report 실패"
+
+    # export CSV into the temp folder
+    csv_path = self.export_report_to_csv(
+      plot_name=report.plot_name
+    )
+
+    print(self.data)
 
   @staticmethod
   def set_random_seed(exception: Exception | None = None, seed=0, manual=False, is_manual: list = []):
