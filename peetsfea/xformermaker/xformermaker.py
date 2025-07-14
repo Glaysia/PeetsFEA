@@ -5,11 +5,12 @@ from dataclasses import dataclass
 from enum import Enum
 import pandas as pd
 import math
-import time
 from typing import Any, Iterator, Literal, Sequence, TypedDict, cast
 from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
+from datetime import datetime
+import time
 
 from ansys.aedt.core.maxwell import Maxwell3d
 from ansys.aedt.core.modeler.cad.elements_3d import Plane, Point
@@ -90,6 +91,12 @@ class XformerMakerInterface(ABC):
     self.data = {}
     self.o3ds: dict[str, Object3d] = {}
     self.progress: str = ""
+    self.progress_dict: dict[str, tuple] = {}
+    self.start_time_pretty: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    self.start_time: str = str(time.monotonic_ns())
+    self.end_time_pretty: str = ""
+    self.end_time: str = ""
+
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,

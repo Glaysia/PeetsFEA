@@ -449,7 +449,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     coil_name = builder.build(coil, second, mirrorX)
     self.coils_main.append(coil_name)
 
-  def create_exctation(self) -> None:
+  def create_excitation(self) -> None:
     # o3ds = self.o3ds
     terminals: dict[str, int] = {}
     faces = {}
@@ -569,7 +569,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
       triangulation_max_length="12.2mm"
     )
 
-  def _get_magnetic_report(self) -> None:
+  def _get_magnetic_report(self) -> bool:
     get_result_list = []
     get_result_list.append(["Matrix1.L(Tx,Tx)", "Ltx"])
     get_result_list.append(["Matrix1.L(Rx1,Rx1)", "Lrx1"])
@@ -621,6 +621,33 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     )
 
     print(self.data)
+    data1 = self.data[report.plot_name]
+
+    for itr, (column_name) in enumerate(data1.columns):
+
+      data1[column_name] = abs(data1[column_name])
+
+      if itr == 0:  # delete "Freq [kHz]" columns
+        data1 = data1.drop(columns=column_name)
+        continue
+
+      if "[pH]" in column_name:  # consider error case
+        return False
+      elif "[nH]" in column_name:
+        data1[column_name] = data1[column_name] * 1e-3
+      elif "[uH]" in column_name:
+        data1[column_name] = data1[column_name] * 1e+0
+      elif "[mH]" in column_name:
+        data1[column_name] = data1[column_name] * 1e+3
+      elif "[H]" in column_name:  # consider error case
+        return False
+
+    data1.columns = ["Ltx", "Lrx1", "Lrx2", "M1", "M2",
+                     "k1", "k2", "Lmt", "Lmr1", "Lmr2", "Llt", "Llr1", "Llr2"]
+
+    self.Lmt = data1.iloc[0, 7]
+
+    return True
 
   @staticmethod
   def set_random_seed(exception: Exception | None = None, seed=0, manual=False, is_manual: list = []):
@@ -699,6 +726,19 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     # self.data2.columns = ["copperloss_Tx", "copperloss_Rx1", "copperloss_Rx2"]
 
+  def coreloss_project(self):
+    M3D: Maxwell3d = AedtHandler.peets_m3d
+    M3D.duplicate_design("script_coreloss")
+    M3D.set_active_design("script_coreloss")
+    to_delete = [
+      exc for exc in M3D.design_excitations if exc.name in self.coils_main]
+
+    for exc in to_delete:
+      exc.delete()
+
+      self.magnetizing_current = 390 * \
+          math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt / 10**(-6)
+
 
 def main():
 
@@ -753,7 +793,7 @@ def main():
       sim.create_winding()
       sim.assign_mesh()
       sim.create_region()
-      sim.create_exctation()
+      sim.create_excitation()
       validity = AedtHandler.peets_m3d.validate_simple() == 1
       assert validity, "디자인이 잘못 만들어짐"
 

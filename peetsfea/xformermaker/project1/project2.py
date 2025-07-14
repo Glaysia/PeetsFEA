@@ -1,3 +1,4 @@
+from datetime import datetime
 import functools
 import pandas as pd
 import numpy as np
@@ -22,15 +23,23 @@ from peetsfea.aedthandler import *
 sim_global: dict[str, XformerMakerInterface | None] = {"sim": None}
 debugging: bool = False
 
-# -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
-
 
 def save_on_exception(func):
   @functools.wraps(func)
-  def wrapper(*args, **kwargs):  # -> Any:
+  def wrapper(*args, **kwargs):
+
+    start = time.monotonic()
     try:
       ret = func(*args, **kwargs)
+      elapsed: str = f"{time.monotonic() - start:.4f}s"
+      sim: XformerMakerInterface | None = sim_global["sim"]
+
+      if isinstance(sim, XformerMakerInterface):
+        k: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        v: str = str(func.__name__)
+        sim.progress_dict[k] = (v, elapsed)
       return ret
+
     except Exception as e:
       close(exception=e, progress=func.__name__)
       # 예외 발생시 정보 저장하고 종료함
@@ -611,10 +620,12 @@ class Project2(XformerMakerInterface):
     v = AedtHandler.peets_m3d.validate_simple()
     assert bool(v), "validate_simple failed"
 
+  @save_on_exception
   def analyze_all(self) -> None:
     AedtHandler.peets_m3d.analyze_setup()
     AedtHandler.peets_m3d.analyze()
 
+  @save_on_exception
   def _get_magnetic_report(self) -> bool:
     get_result_list = []
     get_result_list.append(["Matrix1.L(Tx,Tx)", "Ltx"])
@@ -695,10 +706,12 @@ class Project2(XformerMakerInterface):
 
     return True
 
+  @save_on_exception
   def get_input_parameter(self):
     import pandas as pd
     self.input_parameter = pd.DataFrame.from_dict([self.v])  # type: ignore
 
+  @save_on_exception
   def _get_copper_loss_parameter(self):
 
     # ==============================
@@ -735,6 +748,7 @@ class Project2(XformerMakerInterface):
 
     # self.data2.columns = ["copperloss_Tx", "copperloss_Rx1", "copperloss_Rx2"]
 
+  @save_on_exception
   def coreloss_project(self):
     M3D: Maxwell3d = AedtHandler.peets_m3d
     M3D.duplicate_design("script_coreloss")
@@ -756,6 +770,9 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
   sim: XformerMakerInterface | None = sim_global["sim"]
   if isinstance(sim, XformerMakerInterface):
     sim.progress = progress
+    sim.end_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sim.end_time = str(time.monotonic_ns())
+
   base_tmp = Path("./tmp")
   base_tmp.mkdir(exist_ok=True)
 
