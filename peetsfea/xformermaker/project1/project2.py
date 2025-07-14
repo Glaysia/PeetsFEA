@@ -792,12 +792,12 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
     exit()
 
 
-def set_random_seed(exception: Exception | None = None, seed=0, manual=False, is_manual: dict = {}):
+def set_random_seed(exception: Exception | None = None, seed=0, fixed=False, is_manual: dict = {}):
   global global_seed
   if len(is_manual) != 0:
-    manual = True
+    fixed = True
 
-  if manual:
+  if fixed:
     is_manual[0] = True
     print(is_manual)
     if seed != 0:
@@ -828,8 +828,8 @@ def project2_start() -> None:
     aedt_dir = f"parrarel{parr_idx}"
     non_graphical = True
 
-  # set_random_seed(None, 2389788013, True)
-  # set_random_seed(None, 2102552649, True)
+  set_random_seed(None, 3019364285, True)
+  # set_random_seed(None, time.time_ns() % (2**32), True)
   sim = Project2(
     name=name,
     aedt_dir=aedt_dir,
