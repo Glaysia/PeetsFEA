@@ -608,7 +608,8 @@ class Project2(XformerMakerInterface):
 
   @save_on_exception
   def validate_design(self) -> None:
-    AedtHandler.peets_m3d.validate_simple()
+    v = AedtHandler.peets_m3d.validate_simple()
+    assert bool(v), "validate_simple failed"
 
   def analyze_all(self) -> None:
     AedtHandler.peets_m3d.analyze_setup()
@@ -811,7 +812,7 @@ def project2_start() -> None:
     non_graphical = True
 
   # set_random_seed(None, 2389788013, True)
-  set_random_seed(None, 2102552649, True)
+  # set_random_seed(None, 2102552649, True)
   sim = Project2(
     name=name,
     aedt_dir=aedt_dir,
