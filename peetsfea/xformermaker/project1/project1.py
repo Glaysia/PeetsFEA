@@ -664,10 +664,49 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     print("saved JSON to", json_path)
 
+  def get_input_parameter(self):
+    import pandas as pd
+    self.input_parameter = pd.DataFrame.from_dict([self.v])  # type: ignore
 
-if __name__ == "__main__":
-  import os
-  import sys
+  def _get_copper_loss_parameter(self):
+
+    # ==============================
+    # get copper loss data
+    # ==============================
+    coils = self.coils_main[:]
+
+    def oo(x):
+      obj: Any = self.modeler.get_object_from_name(assignment=x)
+      assert isinstance(obj, Object3d), "get_object_from_name failed"
+      return f"P_{obj.name}"
+
+    coils = map(oo, coils)
+    post: Any = AedtHandler.peets_m3d.post
+    assert isinstance(post, PostProcessorMaxwell)
+
+    report = post.create_report(
+      expressions=coils, setup_sweep_name=None, domain='Sweep',
+      variations=None, primary_sweep_variable=None, secondary_sweep_variable=None,
+      report_category="Fields", plot_type='Data Table', context=None, subdesign_id=None,
+      polyline_points=1001, plot_name="copper loss data"
+    )
+
+    assert isinstance(report, Fields), "create_report failed"
+    dir_data = self.export_report_to_csv(plot_name=report.plot_name)
+
+    print(self.data)
+    # for itr, (column_name) in enumerate(self.data2.columns):
+
+    #   self.data2[column_name] = abs(self.data2[column_name])
+
+    #   if f'P_{Tx.name}' not in column_name and f'P_{Rx1.name}' not in column_name and f'P_{Rx2.name}' not in column_name:
+    #     self.data2 = self.data2.drop(columns=column_name)
+
+    # self.data2.columns = ["copperloss_Tx", "copperloss_Rx1", "copperloss_Rx2"]
+
+
+def main():
+
   root = '/home/harry/opt/AnsysEM/v242/Linux64'
   os.environ.setdefault('ANSYSEM_ROOT242', root)
 
@@ -681,9 +720,8 @@ if __name__ == "__main__":
     aedt_dir = f"parrarel{parr_idx}"
 
   set_random_seed = Project1_EE_Plana_Plana_2Series.set_random_seed
-  set_random_seed(seed=3309586659, manual=True)
-  # set_random_seed()
-
+  # set_random_seed(seed=1095427293, manual=False)
+  set_random_seed()
   sim: Project1_EE_Plana_Plana_2Series
   start = time.monotonic()  # 시작 시각 기록
   timeout_sec = 300
@@ -694,7 +732,9 @@ if __name__ == "__main__":
 
     try:
       sim = Project1_EE_Plana_Plana_2Series(
-          name=name, aedt_dir=aedt_dir, new_desktop=False)
+        name=name, aedt_dir=aedt_dir, new_desktop=False
+      )
+      sim_global.append(sim)
 
       values: dict[str, Iterator[float | str]] = {}
       ranges: dict[str, list[float]] = {}
@@ -725,16 +765,92 @@ if __name__ == "__main__":
     except Exception as e:
       print(f"error {e}, retry")
       set_random_seed(e)
+      AedtHandler.peets_aedt.close_desktop()
     else:
       break
 
-  # AedtHandler.peets_m3d.analyze_setup()
-  # AedtHandler.peets_m3d.analyze()
-  # sim._get_magnetic_report()
-  # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
-  # x.set_material()
-  # AedtHandler.initialize(
-  #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
-  #   design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
-  # )
-  # AedtHandler.peets_aedt.close_desktop()
+  AedtHandler.peets_m3d.analyze_setup()
+  AedtHandler.peets_m3d.analyze()
+  sim._get_magnetic_report()
+  sim.get_input_parameter()
+  sim._get_copper_loss_parameter()
+  exit()
+
+
+# if __name__ == "__main__":
+#   import os
+#   import sys
+#   root = '/home/harry/opt/AnsysEM/v242/Linux64'
+#   os.environ.setdefault('ANSYSEM_ROOT242', root)
+
+#   # print(sys.argv)
+#   if len(sys.argv) < 2:
+#     aedt_dir = "../pyaedt_test"
+#     name = "PeetsFEAdev"
+#   else:
+#     parr_idx: str = str(sys.argv[0])[-1]
+#     name = f"xform_{parr_idx}"
+#     aedt_dir = f"parrarel{parr_idx}"
+
+#   set_random_seed = Project1_EE_Plana_Plana_2Series.set_random_seed
+#   set_random_seed(seed=3309586659, manual=True)
+#   # set_random_seed()
+
+#   sim: Project1_EE_Plana_Plana_2Series
+#   start = time.monotonic()  # 시작 시각 기록
+#   timeout_sec = 300
+#   while True:
+#     if time.monotonic() - start > timeout_sec:
+#       print(f"error , retry")
+#       set_random_seed(TimeoutError("300초 타임아웃"))
+
+#     try:
+#       sim = Project1_EE_Plana_Plana_2Series(
+#           name=name, aedt_dir=aedt_dir, new_desktop=False)
+
+#       values: dict[str, Iterator[float | str]] = {}
+#       ranges: dict[str, list[float]] = {}
+
+#       ranges.update(sim.random_ranges())
+
+#       sim.set_variable_byvalue(input_values=values)
+#       sim.set_variable_byrange(input_ranges=ranges)
+#       sim.set_material()
+#       sim.set_analysis(sim.freq_khz)
+
+#       try:
+#         sim.validate_variable()
+#       except KeyboardInterrupt as e:
+#         print(e)
+#         sim.is_validated = True
+#         sim.create_core()
+#         exit()
+
+#       sim.create_core()
+#       sim.create_winding()
+#       sim.assign_mesh()
+#       sim.create_region()
+#       sim.create_exctation()
+#       validity = AedtHandler.peets_m3d.validate_simple() == 1
+#       assert validity, "디자인이 잘못 만들어짐"
+
+#     except Exception as e:
+#       print(f"error {e}, retry")
+#       set_random_seed(e)
+#     else:
+#       break
+
+#   AedtHandler.peets_m3d.analyze_setup()
+#   AedtHandler.peets_m3d.analyze()
+#   sim._get_magnetic_report()
+#   # print(sim.template[XEnum.EEPlanaPlana2Series]["coil_keys"])
+#   # x.set_material()
+#   # AedtHandler.initialize(
+#   #   project_name="AIPDProject", project_path=Path.cwd().joinpath("../pyaedt_test"),
+#   #   design_name="AIPDDesign", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent
+#   # )
+#   # AedtHandler.peets_aedt.close_desktop()
+
+if __name__ == "__main__":
+  main()
+  exit()
