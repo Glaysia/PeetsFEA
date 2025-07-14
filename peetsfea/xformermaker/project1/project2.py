@@ -622,8 +622,18 @@ class Project2(XformerMakerInterface):
 
   @save_on_exception
   def analyze_all(self) -> None:
-    AedtHandler.peets_m3d.analyze_setup()
-    AedtHandler.peets_m3d.analyze()
+    setting = {
+      'cores': 1, 'tasks': 1,
+      'gpus': 1, 'use_auto_settings': False
+    }
+    self.setting = setting
+
+    AedtHandler.peets_m3d.analyze_setup(
+      **setting
+    )
+    AedtHandler.peets_m3d.analyze(
+      **setting
+    )
 
   @save_on_exception
   def _get_magnetic_report(self) -> bool:
@@ -853,6 +863,7 @@ def project2_start() -> None:
   sim.create_region()
   sim.create_excitation()
   sim.validate_design()
+  sim.analyze_all()
 
   close()
 
