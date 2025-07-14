@@ -1,18 +1,24 @@
 from pathlib import Path
 import pandas as pd
+import numpy as np
+import os
+import sys
 import math
 import time
-from typing import Iterator, Sequence
+from typing import Any, Iterator, Sequence
+from pathlib import Path
+
+from ansys.aedt.core.visualization.post.post_maxwell import PostProcessorMaxwell
+from ansys.aedt.core.visualization.report.field import Fields
 from ansys.aedt.core.maxwell import Maxwell3d
 from ansys.aedt.core.modeler.cad.object_3d import Object3d
 from ansys.aedt.core.modules.boundary.common import BoundaryObject
 from ansys.aedt.core.modeler.cad.elements_3d import FacePrimitive, EdgePrimitive
-import numpy as np
 from peetsfea.xformermaker import XformerMakerInterface, \
   XformerType, XEnum
 from peetsfea.xformermaker import peets_global_rand_seed as global_seed
 from peetsfea.aedthandler import *
-sim_globlal: list[XformerMakerInterface] = []
+sim_global: list[XformerMakerInterface] = []
 
 
 class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
@@ -21,14 +27,13 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
 
     self.v: dict[str, float] = {}
     self.comments: list[str] = []
-    self.o3ds: dict[str, Object3d] = {}
+
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
     self.coils_main: list[str] = []
-
-    global sim_globlal
-    sim_globlal.append(self)
+    global sim_global
+    sim_global.append(self)
 
   def random_ranges(self) -> dict[str, list[float]]:
     ranges = {}

@@ -80,7 +80,8 @@ class XformerMakerInterface(ABC):
     self.per: int = 3000
     self.freq_khz: int = 140
     self.is_validated: bool = False
-
+    self.data = {}
+    self.o3ds: dict[str, Object3d] = {}
     AedtHandler.initialize(
       project_name=f"{name}_Project", project_path=Path.cwd().joinpath(aedt_dir),
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,
