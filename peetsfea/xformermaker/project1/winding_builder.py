@@ -113,55 +113,68 @@ class WindingBuilder:
 
     o3ds = self.o3ds
 
-    o3ds[f'{coil_name}_connect'] = self.modeler.create_polyline(
-        points_connect, name=f"{coil_name}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
+    o = o3ds[f'{coil_name}_connect'] = self.modeler.create_polyline(
+        points=points_connect, name=f"{coil_name}_connect", xsection_type="Circle", xsection_width=f"{coil}_width*0.8", xsection_num_seg=12)  # type: ignore
+    assert o, "create_polyline failed"
 
     o3ds[f'{coil_name}_1'] = self._create_polyline(
         points=points, name=f"{coil_name}_1", coil_width=f"{coil}_width", coil_height=f"{coil}_height")
 
-    self.modeler.copy(assignment=o3ds[f'{coil_name}_1'])
-    self.modeler.paste()
-    o3ds[f'{coil_name}_2'] = self.modeler.get_object_from_name(  # type: ignore
+    o = self.modeler.copy(assignment=o3ds[f'{coil_name}_1'])
+    assert o != None, "copy failed"
+    o = self.modeler.paste()
+    assert o != None, "paste failed"
+    o = o3ds[f'{coil_name}_2'] = self.modeler.get_object_from_name(  # type: ignore
       assignment=f"{coil_name}_2")
+    assert o != None, "get_object_from_name failed"
+
     tmp = o3ds[f'{coil_name}_2']
     assert not (tmp is None), f"{f'{coil_name}_2 key error'}"
-    self.modeler.mirror(
+    o = self.modeler.mirror(
       assignment=o3ds[f'{coil_name}_2'],
       origin=[0, 0, 0], vector=[1, 0, 0]
     )
+    assert o, "mirror failed"
     self.modeler.move(
       assignment=o3ds[f'{coil_name}_2'],
       vector=["0mm", "0mm", f"-({coil}_preg/2+{coil}_height/2)"]
     )
+    assert o, "move failed"
 
-    self.modeler.move(
+    o = self.modeler.move(
       assignment=o3ds[f'{coil_name}_1'],
       vector=["0mm", "0mm", f"{coil}_preg/2+{coil}_height/2"]
     )
+    assert o, "move failed"
 
-    self.modeler.unite(
+    o = self.modeler.unite(
       assignment=[o3ds[f'{coil_name}_1'], o3ds[f"{coil_name}_2"], o3ds[f"{coil_name}_connect"]])
+
+    assert o, "unite failed"
 
     o3ds[f'{coil_name}_1'].color = [255, 0, 0]
     o3ds[f'{coil_name}_1'].transparency = 0
 
     if mirrorX:
-      self.modeler.mirror(
+      o = self.modeler.mirror(
         assignment=o3ds[f'{coil_name}_1'],
         origin=[0, 0, 0], vector=[0, 1, 0]
       )
+      assert o, "mirror failed"
 
     if second != None and second == False:
-      self.modeler.move(
+      o = self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
         vector=["0mm", "0mm", f"g2+Tx_height/0.7"]
       )
+      assert o, "mirror failed"
 
     if second != None and second == True:
-      self.modeler.move(
+      o = self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
         vector=["0mm", "0mm", f"-g2-Tx_height/0.7"]
       )
+      assert o, "mirror failed"
 
     AedtHandler.log(f"Winding{coil_name} 생성 완료")
     return f'{coil_name}_1'
