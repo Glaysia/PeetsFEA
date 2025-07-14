@@ -512,7 +512,7 @@ class Project1_EE_Plana_Plana_2Series(XformerMakerInterface):
     )
 
     Tx1_winding = M3D.assign_winding(
-      assignment=[], winding_type="Current", is_solid=True, current=4.2, name="Tx1"  # type: ignore
+      assignment=[], winding_type="Current", is_solid=True, current=4.2, name="Tx1"
     )
     Rx1_winding = M3D.assign_winding(
       assignment=[], winding_type="Current", is_solid=True, current=12.6, name="Rx1"  # type: ignore

@@ -1,10 +1,10 @@
 import logging
 from types import MethodType
 from typing import Any, Literal, Sequence, cast
-
+from peetsfea.aedthandler import PeetsMaxwell3d as Maxwell3d
 # from Coil import Coil
 # from Peets import CoilDesignParam
-from ansys.aedt.core import Desktop, Maxwell3d                        # type: ignore
+from ansys.aedt.core import Desktop                      # type: ignor
 from ansys.aedt.core.generic.constants import SOLUTIONS               # type: ignore
 from ansys.aedt.core.modeler.modeler_2d import Modeler2D
 from ansys.aedt.core.modeler.modeler_3d import Modeler3D
