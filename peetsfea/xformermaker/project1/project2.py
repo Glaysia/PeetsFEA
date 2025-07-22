@@ -926,12 +926,24 @@ class Project2(XformerMakerInterface):
       self.magnetizing_current = 390 * \
           math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt / 10**(-6)
 
+  @staticmethod
+  def project2_start() -> Dict[str, XformerMakerInterface | None | bool] :
+    project2_start()
+    global sim_global
+
+    return sim_global
+
+  def project2_stop(self):
+    for k, v in self.data.items():
+      if isinstance(v, pd.DataFrame):
+        self.data[k] = v.to_dict()
+
 
 def close(exception: Exception | None = None, progress: str = "") -> None:
   global sim_global
   import uuid
   import json
-  sim: XformerMakerInterface | None = sim_global["sim"]
+  sim: XformerMakerInterface | None | bool = sim_global["sim"]
   if isinstance(sim, XformerMakerInterface):
     sim.progress = progress
     sim.end_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -950,7 +962,7 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
 
   print("saved JSON to", json_path)
 
-  if not (exception == None or debugging):
+  if not (exception == None or sim_global["debugging"]):
     # 예외가 발생하지 않았으면 끝내지 않음
     # 디버깅시엔 끝내지 않음
     exit()
@@ -992,8 +1004,8 @@ def project2_start() -> None:
     aedt_dir = f"parrarel{parr_idx}"
     non_graphical = True
 
-  set_random_seed(None, 3019364285, True)
-  # set_random_seed(None, time.time_ns() % (2**32), True)
+  # set_random_seed(None, 3019364285, True)
+  set_random_seed(None, time.time_ns() % (2**32), True)
   sim = Project2(
     name=name,
     aedt_dir=aedt_dir,
@@ -1018,6 +1030,11 @@ def project2_start() -> None:
   sim.create_excitation()
   sim.validate_design()
   sim.analyze_all()
+  sim._get_magnetic_report()
+  sim.get_input_parameter()
+  sim._get_copper_loss_parameter()
+  sim.coreloss_project()
+  sim.project2_stop()
 
   close()
 
