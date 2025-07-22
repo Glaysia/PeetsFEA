@@ -275,6 +275,28 @@ class AedtHandler:
     cls.oproj: AedtPropServer = cls.peets_aedt.active_project()  # type: ignore
     cls.log("데스크톱을 초기화했습니다.")
 
+    oDesign = cls.peets_m3d.odesign
+
+    oDesign.SetDesignSettings([
+      "NAME:Design Settings Data",
+      "Allow Material Override:=", False,
+      "Perform Minimal validation:=", False,
+      "EnabledObjects:="	, [],
+      "PerfectConductorThreshold:=", 1E+30,
+      "InsulatorThreshold:="	, 1,
+      "SolveFraction:="	, False,
+      "Multiplier:="		, "1",
+      "SkipMeshChecks:="	, True
+      ], 
+      [
+        "NAME:Model Validation Settings",
+        "EntityCheckLevel:="	, "Strict",
+        "IgnoreUnclassifiedObjects:=", False,
+        "SkipIntersectionChecks:=", False
+    ])
+
+
+
   # @classmethod
   # def set_input(cls, input_coil: CoilDesignParam) -> None:
   #   cls.input_coil: CoilDesignParam = input_coil
