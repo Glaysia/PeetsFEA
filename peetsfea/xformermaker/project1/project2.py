@@ -738,7 +738,55 @@ class Project2(XformerMakerInterface):
     # ==============================
     # get copper loss data
     # ==============================
+    o3ds = self.o3ds
     coils = self.coils_main[:]
+    coils = [o3ds[i] for i in coils]
+    Tx1, Rx1, Rx2 = coils
+
+    n_Tx_loss = self.volumetric_loss(
+      assignments=Tx1.name
+    )
+    n_Rx1_loss = self.volumetric_loss(
+      assignments=Rx1.name
+    )
+    n_Rx2_loss = self.volumetric_loss(
+      assignments=Rx2.name
+    )
+
+    get_result_list = []
+    get_result_list.append([f'P_{Tx1.name}', "copperloss_Tx1"])
+    get_result_list.append([f'P_{Rx1.name}', "copperloss_Rx1"])
+    get_result_list.append([f'P_{Rx2.name}', "copperloss_Rx2"])
+
+    result_expressions = [item[0] for item in get_result_list]
+
+    report = AedtHandler.peets_m3d.post.create_report(  # type: ignore
+      expressions=result_expressions, report_category="Fields",
+      variations={"Freq": ["All"], "Phase": ["Nominal"]},
+      plot_type="Data Table", plot_name="copper loss data"
+    )
+
+    from ansys.aedt.core.visualization.report.standard import Standard
+    assert isinstance(report, Fields), "report 실패"
+
+    self.export_report_to_csv(
+      plot_name=report.plot_name
+    )
+    data = self.data[report.plot_name]
+    assert isinstance(
+      data, pd.DataFrame), "_get_copper_loss_parameter dataframe error"
+    assert (data.to_dict().keys())
+    data = data.to_dict()
+    new_data = {}
+
+    for k, v in data.items():
+      if isinstance(k, str) and ("P_" in k):
+        new_data[k] = v
+
+    self.data["_get_copper_loss_parameter"] = new_data
+
+    return
+
   @save_on_exception
   def __create_B_field(self):
     M3D = AedtHandler.peets_m3d
