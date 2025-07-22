@@ -646,60 +646,57 @@ class Project2(XformerMakerInterface):
       **setting
     )
 
+    return
+
   @save_on_exception
   def _get_magnetic_report(self) -> bool:
     get_result_list = []
-    get_result_list.append(["Matrix1.L(Tx,Tx)", "Ltx"])
+    get_result_list.append(["Matrix1.L(Tx1,Tx1)", "Ltx1"])
     get_result_list.append(["Matrix1.L(Rx1,Rx1)", "Lrx1"])
     get_result_list.append(["Matrix1.L(Rx2,Rx2)", "Lrx2"])
-    get_result_list.append(["Matrix1.L(Tx,Rx1)", "M1"])
-    get_result_list.append(["Matrix1.L(Tx,Rx2)", "M2"])
-    get_result_list.append(["Matrix1.CplCoef(Tx,Rx1)", "k1"])
-    get_result_list.append(["Matrix1.CplCoef(Tx,Rx2)", "k2"])
+    get_result_list.append(["Matrix1.L(Tx1,Rx1)", "M1"])
+    get_result_list.append(["Matrix1.L(Tx1,Rx2)", "M2"])
+    get_result_list.append(["Matrix1.CplCoef(Tx1,Rx1)", "k1"])
+    get_result_list.append(["Matrix1.CplCoef(Tx1,Rx2)", "k2"])
     get_result_list.append(
-      ["Matrix1.L(Tx,Tx)*(Matrix1.CplCoef(Tx,Rx1)^2)", "Lmt"])
+        ["Matrix1.L(Tx1,Tx1)*(Matrix1.CplCoef(Tx1,Rx1)^2)", "Lmt"])
     get_result_list.append(
-      ["Matrix1.L(Rx1,Rx1)*(Matrix1.CplCoef(Tx,Rx1)^2)", "Lmr1"])
+        ["Matrix1.L(Rx1,Rx1)*(Matrix1.CplCoef(Tx1,Rx1)^2)", "Lmr1"])
     get_result_list.append(
-      ["Matrix1.L(Rx2,Rx2)*(Matrix1.CplCoef(Tx,Rx2)^2)", "Lmr2"])
+        ["Matrix1.L(Rx2,Rx2)*(Matrix1.CplCoef(Tx1,Rx2)^2)", "Lmr2"])
     get_result_list.append(
-      ["Matrix1.L(Tx,Tx)*(1-Matrix1.CplCoef(Tx,Rx1)^2)", "Llt"])
+        ["Matrix1.L(Tx1,Tx1)*(1-Matrix1.CplCoef(Tx1,Rx1)^2)", "Llt"])
     get_result_list.append(
-      ["Matrix1.L(Rx1,Rx1)*(1-Matrix1.CplCoef(Tx,Rx1)^2)", "Llr1"])
+        ["Matrix1.L(Rx1,Rx1)*(1-Matrix1.CplCoef(Tx1,Rx1)^2)", "Llr1"])
     get_result_list.append(
-      ["Matrix1.L(Rx2,Rx2)*(1-Matrix1.CplCoef(Tx,Rx2)^2)", "Llr2"])
+        ["Matrix1.L(Rx2,Rx2)*(1-Matrix1.CplCoef(Tx1,Rx2)^2)", "Llr2"])
 
     result_expressions = [item[0] for item in get_result_list]
 
-    import tempfile
     from ansys.aedt.core.visualization.report.standard import Standard
     assert AedtHandler.peets_m3d.post, "post 안됨"
 
     report = AedtHandler.peets_m3d.post.create_report(
-        expressions=result_expressions,
-        setup_sweep_name=None,
-        domain='Sweep',
-        variations=None,
-        primary_sweep_variable=None,
-        secondary_sweep_variable=None,
-        report_category=None,
-        plot_type='Data Table',
-        context=None,
-        subdesign_id=None,
-        polyline_points=1001,
-        plot_name="simulation parameter"
+      expressions=result_expressions,
+      setup_sweep_name=None, domain='Sweep',
+      variations=None, primary_sweep_variable=None,
+      secondary_sweep_variable=None,
+      report_category=None, plot_type='Data Table',
+      context=None, subdesign_id=None, polyline_points=1001,
+      plot_name="simulation parameter"
     )  # type: ignore
     report: Standard = report
     assert report, "report 실패"
     assert isinstance(report, Standard), "report 실패"
 
     # export CSV into the temp folder
-    csv_path = self.export_report_to_csv(
+    self.export_report_to_csv(
       plot_name=report.plot_name
     )
 
-    print(self.data)
     data1 = self.data[report.plot_name]
+    assert isinstance(data1, pd.DataFrame), "TypeError"
+    data1 = data1.iloc[:, -14:]
 
     for itr, (column_name) in enumerate(data1.columns):
 
@@ -720,10 +717,12 @@ class Project2(XformerMakerInterface):
       elif "[H]" in column_name:  # consider error case
         return False
 
-    data1.columns = ["Ltx", "Lrx1", "Lrx2", "M1", "M2",
-                     "k1", "k2", "Lmt", "Lmr1", "Lmr2", "Llt", "Llr1", "Llr2"]
-
-    self.Lmt = data1.iloc[0, 7]
+    data1.columns = [
+      "Ltx_uH", "Lrx1_uH", "Lrx2_uH", "M1_uH", "M2_uH", "k1_uH", "k2_uH",
+      "Lmt_uH", "Lmr1_uH", "Lmr2_uH", "Llt_uH", "Llr1_uH", "Llr2_uH"
+    ]
+    self.data['_get_magnetic_report'] = data1.to_dict(orient='records')[0]
+    self.Lmt_uH = data1.iloc[0, 7]
 
     return True
 
