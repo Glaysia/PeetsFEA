@@ -219,11 +219,11 @@ class Project2(XformerMakerInterface):
         )
 
       # 코어 변수들
-      A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
-      B = 2 * (v["l2"]) + v['l1_center']
-      C = v['l1_center']
-      D = v['h1'] * 0.5 + v['l1_top']
-      E = v['h1'] / 2
+      v["A"] = A = 2 * (v["l1_leg"] + v["l2"]) + v['l1_center']
+      v["B"] = B = 2 * (v["l2"]) + v['l1_center']
+      v["C"] = C = v['l1_center']
+      v["D"] = D = v['h1'] * 0.5 + v['l1_top']
+      v["E"] = E = v['h1'] / 2
       l1_leg = v["l1_leg"]
       l1_top = v["l1_top"]
       BpA = B / A
@@ -739,35 +739,76 @@ class Project2(XformerMakerInterface):
     # get copper loss data
     # ==============================
     coils = self.coils_main[:]
+  @save_on_exception
+  def __create_B_field(self):
+    M3D = AedtHandler.peets_m3d
 
-    def oo(x):
-      obj: Any = self.modeler.get_object_from_name(assignment=x)
-      assert isinstance(obj, Object3d), "get_object_from_name failed"
-      return f"P_{obj.name}"
-
-    coils = map(oo, coils)
-    post: Any = AedtHandler.peets_m3d.post
-    assert isinstance(post, PostProcessorMaxwell)
-
-    report = post.create_report(
-      expressions=coils, setup_sweep_name=None, domain='Sweep',
-      variations=None, primary_sweep_variable=None, secondary_sweep_variable=None,
-      report_category="Fields", plot_type='Data Table', context=None, subdesign_id=None,
-      polyline_points=1001, plot_name="copper loss data"
+    leg_left = M3D.modeler.create_rectangle(
+        orientation="XY",
+        origin=["B/2", "-(w1)/2", "g1/2"],
+        sizes=["(A-B)/2", "w1"],
+        name="leg_left"
     )
 
-    assert isinstance(report, Fields), "create_report failed"
-    dir_data = self.export_report_to_csv(plot_name=report.plot_name)
+    leg_left.model = False
 
-    print(self.data)
-    # for itr, (column_name) in enumerate(self.data2.columns):
+    leg_center = M3D.modeler.create_rectangle(
+        orientation="XY",
+        origin=["-C/2", "-(w1)/2", "g1/2"],
+        sizes=["C", "w1"],
+        name="leg_center"
+    )
+    leg_center.model = False
 
-    #   self.data2[column_name] = abs(self.data2[column_name])
+    leg_right = M3D.modeler.create_rectangle(
+        orientation="XY",
+        origin=["-B/2", "-(w1)/2", "g1/2"],
+        sizes=["-(A-B)/2", "w1"],
+        name="leg_right"
+    )
+    leg_right.model = False
 
-    #   if f'P_{Tx.name}' not in column_name and f'P_{Rx1.name}' not in column_name and f'P_{Rx2.name}' not in column_name:
-    #     self.data2 = self.data2.drop(columns=column_name)
+    leg_top_left = M3D.modeler.create_rectangle(
+        orientation="YZ",
+        origin=['-(B-l2)/2', '-(w1)/2', 'h1/2+l1_top'],
+        sizes=['w1', '-(D-E)']
+    )
+    leg_top_left.model = False
+    leg_top_left.name = "leg_top_left"
 
-    # self.data2.columns = ["copperloss_Tx", "copperloss_Rx1", "copperloss_Rx2"]
+    leg_bottom_left = M3D.modeler.create_rectangle(
+        orientation="YZ",
+        origin=['-(B-l2)/2', '-(w1)/2', '-(h1/2+l1_top)'],
+        sizes=['w1', '(D-E)']
+    )
+    leg_bottom_left.model = False
+    leg_bottom_left.name = "leg_bottom_left"
+
+    leg_top_right = M3D.modeler.create_rectangle(
+        orientation="YZ",
+        origin=['(B-l2)/2', '-(w1)/2', 'h1/2+l1_top'],
+        sizes=['w1', '-(D-E)']
+    )
+    leg_top_right.model = False
+    leg_top_right.name = "leg_top_right"
+
+    leg_bottom_right = M3D.modeler.create_rectangle(
+        orientation="YZ",
+        origin=['(B-l2)/2', '-(w1)/2', '-(h1/2+l1_top)'],
+        sizes=['w1', '(D-E)']
+    )
+    leg_bottom_right.model = False
+    leg_bottom_right.name = "leg_bottom_right"
+
+    l = self.o3ds["B_fields"] = []
+    l.append(leg_left)
+    l.append(leg_center)
+    l.append(leg_right)
+
+    l.append(leg_top_left)
+    l.append(leg_bottom_left)
+    l.append(leg_top_right)
+    l.append(leg_bottom_right)
 
   @save_on_exception
   def coreloss_project(self):
