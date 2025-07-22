@@ -780,7 +780,7 @@ class Project2(XformerMakerInterface):
 
     for k, v in data.items():
       if isinstance(k, str) and ("P_" in k):
-        new_data[k] = v["0"]
+        new_data[k] = list(v)[-1]
 
     self.data["_get_copper_loss_parameter"] = new_data
 
@@ -1024,16 +1024,23 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
 
   unique_name = f"sim_dict_{uuid.uuid4().__str__()}.json"
   json_path = os.path.join(base_tmp, unique_name)
-  with open(json_path, "w") as f:
-    json.dump(data, f, default=lambda o: repr(o), indent=2)
-
-  print("saved JSON to", json_path)
+  if len(data) > 3:
+    with open(json_path, "w") as f:
+      json.dump(data, f, default=lambda o: repr(o), indent=2)
+    
+  
+  print("saved JSON to", f"./{json_path}")
 
   if not (exception == None or sim_global["debugging"]):
     # 예외가 발생하지 않았으면 끝내지 않음
     # 디버깅시엔 끝내지 않음
     exit()
-
+  try:
+    AedtHandler.peets_m3d.close_desktop()
+  except Exception as e:
+    print(e)
+  else:
+    exit()
 
 def set_random_seed(exception: Exception | None = None, seed=0, fixed=False, is_manual: dict = {}):
   global global_seed
@@ -1053,7 +1060,6 @@ def set_random_seed(exception: Exception | None = None, seed=0, fixed=False, is_
   close(exception=None, progress='set_random_seed')
 
 
-@save_on_exception
 def project2_start() -> None:
   global sim_global
   root = '/home/harry/opt/AnsysEM/v242/Linux64'
@@ -1065,18 +1071,20 @@ def project2_start() -> None:
     aedt_dir = "../pyaedt_test"
     name = "PeetsFEAdev"
     non_graphical = False
+    new_desktop=False
   else:
-    parr_idx: str = str(sys.argv[0])[-1]
+    parr_idx: str = str(sys.argv[1])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
     non_graphical = True
+    new_desktop=True
 
   # set_random_seed(None, 3019364285, True)
   set_random_seed(None, time.time_ns() % (2**32), True)
   sim = Project2(
     name=name,
     aedt_dir=aedt_dir,
-    new_desktop=False,
+    new_desktop=new_desktop,
     non_graphical=non_graphical
   )
   values: dict[str, Iterator[float | str]] = {}
@@ -1103,8 +1111,10 @@ def project2_start() -> None:
   sim.coreloss_project()
   sim.project2_stop()
 
+  
   close()
-
+  if non_graphical:
+    exit()
 
 if __name__ == '__main__':
   project2_start()

@@ -14,4 +14,5 @@ peetsfea/xformermaker/xformermaker.py
 peetsfea/xformermaker/project1/__init__.py
 peetsfea/xformermaker/project1/core_builder.py
 peetsfea/xformermaker/project1/project1.py
+peetsfea/xformermaker/project1/project2.py
 peetsfea/xformermaker/project1/winding_builder.py
