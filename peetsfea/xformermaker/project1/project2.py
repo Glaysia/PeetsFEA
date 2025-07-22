@@ -858,6 +858,61 @@ class Project2(XformerMakerInterface):
     l.append(leg_bottom_right)
 
   @save_on_exception
+  def _get_mean_Bfield(self, obj) -> str:
+
+    assignment = obj.name
+    M3D = AedtHandler.peets_m3d
+    oModule = M3D.ofieldsreporter
+    oModule.CalcStack("clear")
+    oModule.CopyNamedExprToStack("Mag_B")
+    oModule.EnterVol(
+        assignment) if obj.is3d else oModule.EnterSurf(assignment)
+    oModule.CalcOp("Mean")
+    name = "B_mean_{}".format(assignment)  # Need to check for uniqueness !
+    oModule.AddNamedExpression(name, "Fields")
+
+    return name
+
+  @save_on_exception
+  def __get_B_field(self):
+    B_fields: list[Object3d] = self.o3ds["B_fields"]
+    parameters = []
+    for i in B_fields:
+      parameters.append([i, "B_mean", f"B_mean_{i.name}"])
+
+    result_expressions = []
+    name_list = []
+
+    for o3d, exp, name in parameters:
+      if exp == "B_mean":
+        result_expressions.append(self._get_mean_Bfield(o3d))
+
+      name_list.append(name)
+    
+    assert AedtHandler.peets_m3d.post != None, "__get_B_field post error"
+
+    report:Any = AedtHandler.peets_m3d.post.create_report(  
+      expressions=result_expressions, report_category="Fields",
+      variations={"Freq": ["All"], "Phase": ["Nominal"]},
+      plot_type="Data Table", plot_name="B mean report"
+    )
+    assert isinstance(report, Fields), "__get_B_field report error"
+
+    self.export_report_to_csv(
+      plot_name=report.plot_name
+    )
+    data4 : pd.DataFrame = self.data[report.plot_name]
+    data4 = data4.to_dict(orient='records')[0]
+
+    new_data={}
+
+    for k, v in data4.items():
+      if "B_mean" in k:
+        new_data[k]=v
+
+    self.data['__get_B_field'] = new_data
+
+  @save_on_exception
   def coreloss_project(self):
     M3D: Maxwell3d = AedtHandler.peets_m3d
     M3D.duplicate_design("script_coreloss")
