@@ -84,12 +84,13 @@ class XformerMakerInterface(ABC):
     new_desktop: bool,
     non_graphical: bool
   ) -> None:
+    self.aedt_dir = aedt_dir
     self.xformer_type: XformerType = XEnum.EEPlanaPlana2Series
     self.per: int = 3000
     self.freq_khz: int = 140
     self.is_validated: bool = False
-    self.data = {}
-    self.o3ds: dict[str, Object3d] = {}
+    self.data: dict[str, pd.DataFrame | dict] = {}
+    self.o3ds: dict[str, Object3d | list[Object3d]] = {}
     self.progress: str = ""
     self.progress_dict: dict[str, tuple] = {}
     self.start_time_pretty: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -102,6 +103,9 @@ class XformerMakerInterface(ABC):
       design_name=f"{name}_Design", sol_type=SOLUTIONS.Maxwell3d.EddyCurrent,
       new_desktop=new_desktop, close_on_desktop=True, non_graphical=non_graphical
     )
+    self.design_name = f"{name}_Design"
+    self.project_name = f"{name}_Project"
+
     _modeler: Modeler2D | Modeler3D | None = AedtHandler.peets_m3d.modeler
     assert isinstance(_modeler, Modeler3D), "modeler initialization failed"
     self.modeler: Modeler3D = _modeler
@@ -332,3 +336,13 @@ class XformerMakerInterface(ABC):
 
   def delete_all(self):
     AedtHandler.peets_m3d.delete_design()
+
+  @staticmethod
+  def volumetric_loss(assignments: str) -> str:
+    oModule = AedtHandler.peets_m3d.get_module(module_name="FieldsReporter")
+    oModule.EnterQty("OhmicLoss")
+    oModule.EnterVol(assignments)
+    oModule.CalcOp("Integrate")
+    name = f"P_{assignments}"
+    oModule.AddNamedExpression(name, 'Fields')
+    return name
