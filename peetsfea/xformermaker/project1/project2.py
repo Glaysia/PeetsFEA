@@ -1,27 +1,36 @@
+from typing import Dict
+
+from ansys.aedt.core.visualization.post.post_3dlayout import PostProcessor3DLayout
+from ansys.aedt.core.visualization.post.post_circuit import PostProcessorCircuit
+from ansys.aedt.core.visualization.post.post_common_3d import PostProcessor3D
+from ansys.aedt.core.visualization.post.post_hfss import PostProcessorHFSS
+from ansys.aedt.core.visualization.post.post_icepak import PostProcessorIcepak
+from ansys.aedt.core.visualization.report.standard import Standard
+from peetsfea.aedthandler import *
+from peetsfea.xformermaker import peets_global_rand_seed as global_seed
+from peetsfea.xformermaker import XformerMakerInterface, \
+  XformerType, XEnum
+from ansys.aedt.core.modeler.cad.elements_3d import FacePrimitive, EdgePrimitive
+from ansys.aedt.core.modules.boundary.common import BoundaryObject
+from ansys.aedt.core.modeler.cad.object_3d import Object3d
+from ansys.aedt.core.maxwell import Maxwell3d
+from ansys.aedt.core.visualization.report.field import Fields
+from ansys.aedt.core.visualization.post.post_maxwell import PostProcessorMaxwell
+from pathlib import Path
+from typing import Any, ItemsView, Iterator, Literal, Sequence
+import time
+import math
+import sys
+import os
+import numpy as np
 from datetime import datetime
 import functools
 import pandas as pd
-import numpy as np
-import os
-import sys
-import math
-import time
-from typing import Any, Iterator, Literal, Sequence
-from pathlib import Path
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 
-from ansys.aedt.core.visualization.post.post_maxwell import PostProcessorMaxwell
-from ansys.aedt.core.visualization.report.field import Fields
-from ansys.aedt.core.maxwell import Maxwell3d
-from ansys.aedt.core.modeler.cad.object_3d import Object3d
-from ansys.aedt.core.modules.boundary.common import BoundaryObject
-from ansys.aedt.core.modeler.cad.elements_3d import FacePrimitive, EdgePrimitive
-from peetsfea.xformermaker import XformerMakerInterface, \
-  XformerType, XEnum
-from peetsfea.xformermaker import peets_global_rand_seed as global_seed
-from peetsfea.aedthandler import *
 
-sim_global: dict[str, XformerMakerInterface | None] = {"sim": None}
-debugging: bool = False
+sim_global: dict[str, XformerMakerInterface | None | bool] = {"sim": None,"debugging":False}
 
 
 def save_on_exception(func):
@@ -38,6 +47,7 @@ def save_on_exception(func):
         k: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         v: str = str(func.__name__)
         sim.progress_dict[k] = (v, elapsed)
+
       return ret
 
     except Exception as e:
@@ -64,6 +74,7 @@ class Project2(XformerMakerInterface):
     self.coils_main: list[str] = []
     global sim_global
     sim_global['sim'] = self
+    self.sim_global: Dict[str, XformerMakerInterface | None | bool] = sim_global
 
   @save_on_exception
   def random_ranges(self) -> dict[str, list[float]]:
