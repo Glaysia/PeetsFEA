@@ -780,7 +780,7 @@ class Project2(XformerMakerInterface):
 
     for k, v in data.items():
       if isinstance(k, str) and ("P_" in k):
-        new_data[k] = v
+        new_data[k] = v["0"]
 
     self.data["_get_copper_loss_parameter"] = new_data
 
@@ -915,16 +915,83 @@ class Project2(XformerMakerInterface):
   @save_on_exception
   def coreloss_project(self):
     M3D: Maxwell3d = AedtHandler.peets_m3d
-    M3D.duplicate_design("script_coreloss")
-    M3D.set_active_design("script_coreloss")
-    to_delete = [
-      exc for exc in M3D.design_excitations if exc.name in self.coils_main]
 
-    for exc in to_delete:
-      exc.delete()
+    M3D.duplicate_design(f"{self.design_name}_coreloss")
+    M3D.set_active_design(f"{self.design_name}_coreloss")
+    excitations: dict[str, BoundaryObject] = M3D.design_excitations
+    to_delete: dict[str, BoundaryObject] = {}
+    for k, v in excitations.items():
+      if k in ['Tx1', 'Rx1', 'Rx2']:
+        to_delete[k] = v
 
-      self.magnetizing_current = 390 * \
-          math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt / 10**(-6)
+    for k, v in to_delete.items():
+      v.delete()
+
+    magnetizing_current = 390 * \
+        math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt_uH / 10**(-6) / 2
+
+    Tx1_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=magnetizing_current, name="Tx1")
+    Rx1_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=0, name="Rx1")
+    Rx2_winding = M3D.assign_winding(
+      assignment=[], winding_type="Current", is_solid=True, current=0, name="Rx2")
+
+    M3D.add_winding_coils(
+        assignment=Tx1_winding.name,
+        coils=['Tx_1_icoil', 'Tx_1_ocoil'],
+      )
+    M3D.add_winding_coils(
+        assignment=Rx1_winding.name,
+        coils=['Rx_1_icoil', 'Rx_1_ocoil'],
+      )
+    M3D.add_winding_coils(
+        assignment=Rx2_winding.name,
+        coils=['Rx_2_icoil', 'Rx_2_ocoil'],
+      )
+
+    M3D.assign_matrix(
+      assignment=[Tx1_winding.name, Rx1_winding.name, Rx2_winding.name],
+      matrix_name="Matrix1"
+    )
+
+    M3D.set_core_losses(assignment="core", core_loss_on_field=True)
+
+    self.__create_B_field()
+    M3D.analyze()
+    get_result_list_coreloss = [f'Coreloss']
+    report:Standard = M3D.post.create_report(
+      expressions=get_result_list_coreloss, setup_sweep_name=None, domain='Sweep',
+      variations=None, primary_sweep_variable=None, secondary_sweep_variable=None,
+      report_category=None, plot_type='Data Table', context=None, subdesign_id=None, 
+      polyline_points=1001, plot_name="coreloss parameter"
+    )
+
+    self.export_report_to_csv(
+      plot_name=report.plot_name
+    )
+
+    data3:pd.DataFrame = self.data[report.plot_name]
+    data3:dict[str,Any] = data3.to_dict(orient='records')[0]
+    new_data ={}
+    for k, v in data3.items():
+      if "[mW]" in k:
+        k.replace("[mW]", "[W]")
+        new_data[k] = v * 1e-3
+      elif "[W]" in k:
+        new_data[k] = v * 1e+0
+      elif "[kW]" in k:
+        new_data[k] = v * 1e+3
+        k.replace("[kW]", "[W]")
+
+    self.data['coreloss_project'] = new_data
+
+    self.__get_B_field()
+    # for exc in to_delete:
+    #   exc.delete()
+
+    #   self.magnetizing_current = 390 * \
+    #       math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt / 10**(-6)
 
   @staticmethod
   def project2_start() -> Dict[str, XformerMakerInterface | None | bool] :
