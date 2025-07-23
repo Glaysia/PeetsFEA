@@ -1016,10 +1016,9 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
     sim.end_time_pretty = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sim.end_time = str(time.monotonic_ns())
 
-  base_tmp = Path("./tmp")
   import platform
   d =platform.node()
-  base_tmp=base_tmp.joinpath(d)
+  base_tmp = Path(f"./tmp/{d}")
   base_tmp.mkdir(exist_ok=True)
 
   data = getattr(sim, "__dict__", {})
