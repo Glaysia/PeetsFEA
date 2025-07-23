@@ -116,14 +116,28 @@ class AedtHandler:
 
   @classmethod
   def open_aedt(cls, new_desktop=False, close_on_exit=True, non_graphical=False) -> int:
-    """
-    *주의 만약 여러개가 켜져있다면 하나의 aedt를 빼고 모두 종료합니다.
-    peets의 aedt의 pid를 반환합니다.
-    pid를 입력받으면 종료하지 않고 해당 pid의 aedt로 부착됩니다.
-    """
+
+    import socket
+    def get_free_ports(n=6):
+      """OS가 할당한 빈 포트 n개를 찾아 반환."""
+      ports = []
+      sockets = []
+      for _ in range(n):
+          s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          # ('', 0) 으로 바인딩하면 OS가 비어 있는 포트를 하나 골라줌
+          s.bind(('', 0))
+          ports.append(s.getsockname()[1])
+          sockets.append(s)
+      # 포트 번호를 얻었으니 소켓 닫기
+      for s in sockets:
+          s.close()
+      return ports
+
+    port = get_free_ports(1)[0]
     aedt = Desktop(
-        new_desktop=new_desktop, close_on_exit=close_on_exit, student_version=False,
-        non_graphical=non_graphical
+        new_desktop=new_desktop, close_on_exit=close_on_exit, 
+        student_version=False, non_graphical=non_graphical,
+        port=port
     )
     cls.peets_aedt = aedt
     return aedt.aedt_process_id
