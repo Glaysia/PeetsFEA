@@ -1018,8 +1018,8 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
 
   import platform
   d =platform.node()
-  base_tmp = Path(f"./tmp/{d}")
-  base_tmp.mkdir(exist_ok=True)
+  base_tmp: Path = Path(f"./tmp") / d
+  base_tmp.mkdir(parents=True, exist_ok=True)
 
   data = getattr(sim, "__dict__", {})
   data['exception'] = exception
