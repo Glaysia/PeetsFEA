@@ -7,7 +7,7 @@ long_description = (this_dir / "README.md").read_text(encoding="utf-8")
 
 setuptools.setup(
     name="PeetsFEA",                                      # PyPI package name
-    version="0.0.1",                                      # release version
+    version="0.1.0",                                      # release version
     author="Glaysia",                                     # author name
     author_email="willbecat27@gmail.com",                 # author email
     description="전력전자 자동화에 필요한 유틸리티 모듈 모음",  # short description
