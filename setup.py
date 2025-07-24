@@ -20,10 +20,9 @@ setuptools.setup(
 
     python_requires=">=3.10",                             # supported Python versions
     install_requires=[                                    # dependencies with platform markers
-        "pyaedt==0.17.4; sys_platform=='win32'",
-        "duckdb==1.3.1; sys_platform=='win32'",
-        "pyaedt==0.17.4; sys_platform=='linux'",
-        "duckdb==1.3.1; sys_platform=='linux'",
+        "pyaedt==0.17.4",                                 # AEDT Python API
+        "pycaret==3.3.2",                                 # data science library
+        "ipykernel>=6.30.0",                              # Jupyter kernel for Python
     ],
 
     classifiers=[                                         # PyPI metadata
