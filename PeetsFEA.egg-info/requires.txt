@@ -1,3 +1,5 @@
 pyaedt==0.17.4
 pycaret==3.3.2
 ipykernel>=6.30.0
+torch==2.7.1
+seaborn==0.13.2

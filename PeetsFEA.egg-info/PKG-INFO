@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: PeetsFEA
-Version: 0.1.4
+Version: 0.1.6
 Summary: 전력전자 자동화에 필요한 유틸리티 모듈 모음
 Home-page: https://github.com/Glaysia/PeetsFEA
 Author: Glaysia
@@ -13,6 +13,8 @@ Description-Content-Type: text/markdown
 Requires-Dist: pyaedt==0.17.4
 Requires-Dist: pycaret==3.3.2
 Requires-Dist: ipykernel>=6.30.0
+Requires-Dist: torch==2.7.1
+Requires-Dist: seaborn==0.13.2
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
