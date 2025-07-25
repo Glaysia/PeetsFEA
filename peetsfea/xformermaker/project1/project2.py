@@ -30,7 +30,10 @@ pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
 
 
-sim_global: dict[str, XformerMakerInterface | None | bool] = {"sim": None,"debugging":False}
+sim_global: dict[
+  str, XformerMakerInterface |
+  None | bool
+] = {"sim": None, "debugging": False}
 
 
 def save_on_exception(func):
@@ -74,7 +77,10 @@ class Project2(XformerMakerInterface):
     self.coils_main: list[str] = []
     global sim_global
     sim_global['sim'] = self
-    self.sim_global: Dict[str, XformerMakerInterface | None | bool] = sim_global
+    self.sim_global: Dict[
+      str, XformerMakerInterface |
+      None | bool
+    ] = sim_global
 
   @save_on_exception
   def random_ranges(self) -> dict[str, list[float]]:
@@ -888,10 +894,10 @@ class Project2(XformerMakerInterface):
         result_expressions.append(self._get_mean_Bfield(o3d))
 
       name_list.append(name)
-    
+
     assert AedtHandler.peets_m3d.post != None, "__get_B_field post error"
 
-    report:Any = AedtHandler.peets_m3d.post.create_report(  
+    report: Any = AedtHandler.peets_m3d.post.create_report(
       expressions=result_expressions, report_category="Fields",
       variations={"Freq": ["All"], "Phase": ["Nominal"]},
       plot_type="Data Table", plot_name="B mean report"
@@ -901,14 +907,14 @@ class Project2(XformerMakerInterface):
     self.export_report_to_csv(
       plot_name=report.plot_name
     )
-    data4 : pd.DataFrame = self.data[report.plot_name]
+    data4: pd.DataFrame = self.data[report.plot_name]
     data4 = data4.to_dict(orient='records')[0]
 
-    new_data={}
+    new_data = {}
 
     for k, v in data4.items():
       if "B_mean" in k:
-        new_data[k]=v
+        new_data[k] = v
 
     self.data['__get_B_field'] = new_data
 
@@ -960,10 +966,10 @@ class Project2(XformerMakerInterface):
     self.__create_B_field()
     M3D.analyze()
     get_result_list_coreloss = [f'Coreloss']
-    report:Standard = M3D.post.create_report(
+    report: Standard = M3D.post.create_report(
       expressions=get_result_list_coreloss, setup_sweep_name=None, domain='Sweep',
       variations=None, primary_sweep_variable=None, secondary_sweep_variable=None,
-      report_category=None, plot_type='Data Table', context=None, subdesign_id=None, 
+      report_category=None, plot_type='Data Table', context=None, subdesign_id=None,
       polyline_points=1001, plot_name="coreloss parameter"
     )
 
@@ -971,9 +977,9 @@ class Project2(XformerMakerInterface):
       plot_name=report.plot_name
     )
 
-    data3:pd.DataFrame = self.data[report.plot_name]
-    data3:dict[str,Any] = data3.to_dict(orient='records')[0]
-    new_data ={}
+    data3: pd.DataFrame = self.data[report.plot_name]
+    data3: dict[str, Any] = data3.to_dict(orient='records')[0]
+    new_data = {}
     for k, v in data3.items():
       if "[mW]" in k:
         k.replace("[mW]", "[W]")
@@ -994,7 +1000,7 @@ class Project2(XformerMakerInterface):
     #       math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt / 10**(-6)
 
   @staticmethod
-  def project2_start() -> Dict[str, XformerMakerInterface | None | bool] :
+  def project2_start() -> Dict[str, XformerMakerInterface | None | bool]:
     project2_start()
     global sim_global
 
@@ -1017,7 +1023,7 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
     sim.end_time = str(time.monotonic_ns())
 
   import platform
-  d =platform.node()
+  d = platform.node()
   base_tmp: Path = Path(f"./tmp") / d
   base_tmp.mkdir(parents=True, exist_ok=True)
 
@@ -1029,8 +1035,7 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
   if len(data) > 3:
     with open(json_path, "w") as f:
       json.dump(data, f, default=lambda o: repr(o), indent=2)
-    
-  
+
   print("saved JSON to", f"./{json_path}")
 
   if not (exception == None or sim_global["debugging"]):
@@ -1043,6 +1048,7 @@ def close(exception: Exception | None = None, progress: str = "") -> None:
     print(e)
   else:
     exit()
+
 
 def set_random_seed(exception: Exception | None = None, seed=0, fixed=False, is_manual: dict = {}):
   global global_seed
@@ -1073,13 +1079,13 @@ def project2_start() -> None:
     aedt_dir = "../pyaedt_test"
     name = "PeetsFEAdev"
     non_graphical = False
-    new_desktop=False
+    new_desktop = False
   else:
     parr_idx: str = str(sys.argv[1])[-1]
     name = f"xform_{parr_idx}"
     aedt_dir = f"parrarel{parr_idx}"
     non_graphical = True
-    new_desktop=True
+    new_desktop = True
 
   # set_random_seed(None, 3019364285, True)
   set_random_seed(None, time.time_ns() % (2**32), True)
@@ -1113,10 +1119,10 @@ def project2_start() -> None:
   sim.coreloss_project()
   sim.project2_stop()
 
-  
   close()
   if non_graphical:
     exit()
+
 
 if __name__ == '__main__':
   project2_start()
