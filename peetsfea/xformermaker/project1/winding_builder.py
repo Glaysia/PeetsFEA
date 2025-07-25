@@ -162,17 +162,20 @@ class WindingBuilder:
       )
       assert o, "mirror failed"
 
+    Tx_total_height = '(Tx_height+Tx_preg/1.98)'
+    Rx_total_height = '(Rx_height+Rx_preg/1.98)'
+    total_height  = f"({Tx_total_height}+{Rx_total_height})"
     if second != None and second == False:
       o = self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
-        vector=["0mm", "0mm", f"g2+Tx_height/0.7"]
+        vector=["0mm", "0mm", f"g2+{total_height}"]
       )
       assert o, "mirror failed"
 
     if second != None and second == True:
       o = self.modeler.move(
         assignment=o3ds[f'{coil_name}_1'],
-        vector=["0mm", "0mm", f"-g2-Tx_height/0.7"]
+        vector=["0mm", "0mm", f"-g2-{total_height}"]
       )
       assert o, "mirror failed"
 

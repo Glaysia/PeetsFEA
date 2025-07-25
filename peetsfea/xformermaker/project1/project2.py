@@ -1094,7 +1094,7 @@ def project2_start() -> None:
     new_desktop = True
 
   # set_random_seed(None, 3019364285, True)
-  set_random_seed(None, time.time_ns() % (2**32), True)
+  set_random_seed(None, time.time_ns() % (2**32), False)
   sim = Project2(
     name=name,
     aedt_dir=aedt_dir,
