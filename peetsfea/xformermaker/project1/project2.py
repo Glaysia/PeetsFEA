@@ -738,7 +738,7 @@ class Project2(XformerMakerInterface):
     self.input_parameter = pd.DataFrame.from_dict([self.v])  # type: ignore
 
   @save_on_exception
-  def _get_copper_loss_parameter(self):
+  def _get_copper_loss_parameter(self, after_copper_loss: bool = False):
 
     # ==============================
     # get copper loss data
@@ -748,15 +748,16 @@ class Project2(XformerMakerInterface):
     coils = [o3ds[i] for i in coils]
     Tx1, Rx1, Rx2 = coils
 
-    n_Tx_loss = self.volumetric_loss(
-      assignments=Tx1.name
-    )
-    n_Rx1_loss = self.volumetric_loss(
-      assignments=Rx1.name
-    )
-    n_Rx2_loss = self.volumetric_loss(
-      assignments=Rx2.name
-    )
+    if not after_copper_loss:
+      n_Tx_loss = self.volumetric_loss(
+        assignments=Tx1.name
+      )
+      n_Rx1_loss = self.volumetric_loss(
+        assignments=Rx1.name
+      )
+      n_Rx2_loss = self.volumetric_loss(
+        assignments=Rx2.name
+      )
 
     get_result_list = []
     get_result_list.append([f'P_{Tx1.name}', "copperloss_Tx1"])
@@ -788,7 +789,10 @@ class Project2(XformerMakerInterface):
       if isinstance(k, str) and ("P_" in k):
         new_data[k] = list(v)[-1]
 
-    self.data["_get_copper_loss_parameter"] = new_data
+    if not after_copper_loss:
+      self.data["_get_copper_loss_parameter"] = new_data
+    else:
+      self.data["_get_copper_loss_parameter_after"] = new_data
 
     return
 
@@ -935,6 +939,7 @@ class Project2(XformerMakerInterface):
 
     magnetizing_current = 390 * \
         math.sqrt(2) / 2 / math.pi / 140000 / self.Lmt_uH / 10**(-6) / 2
+    self.data['magnetizing_current'] = magnetizing_current
 
     Tx1_winding = M3D.assign_winding(
       assignment=[], winding_type="Current", is_solid=True, current=magnetizing_current, name="Tx1")
@@ -993,6 +998,7 @@ class Project2(XformerMakerInterface):
     self.data['coreloss_project'] = new_data
 
     self.__get_B_field()
+    self._get_copper_loss_parameter(after_copper_loss=True)
     # for exc in to_delete:
     #   exc.delete()
 
