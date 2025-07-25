@@ -116,28 +116,9 @@ class AedtHandler:
 
   @classmethod
   def open_aedt(cls, new_desktop=False, close_on_exit=True, non_graphical=False) -> int:
-
-    import socket
-    def get_free_ports(n=6):
-      """OS가 할당한 빈 포트 n개를 찾아 반환."""
-      ports = []
-      sockets = []
-      for _ in range(n):
-          s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-          # ('', 0) 으로 바인딩하면 OS가 비어 있는 포트를 하나 골라줌
-          s.bind(('', 0))
-          ports.append(s.getsockname()[1])
-          sockets.append(s)
-      # 포트 번호를 얻었으니 소켓 닫기
-      for s in sockets:
-          s.close()
-      return ports
-
-    port = get_free_ports(1)[0]
     aedt = Desktop(
-        new_desktop=new_desktop, close_on_exit=close_on_exit, 
-        student_version=False, non_graphical=non_graphical,
-        port=port
+        new_desktop=new_desktop, close_on_exit=close_on_exit,
+        student_version=False, non_graphical=non_graphical
     )
     cls.peets_aedt = aedt
     return aedt.aedt_process_id
@@ -295,21 +276,19 @@ class AedtHandler:
       "NAME:Design Settings Data",
       "Allow Material Override:=", False,
       "Perform Minimal validation:=", False,
-      "EnabledObjects:="	, [],
+      "EnabledObjects:=", [],
       "PerfectConductorThreshold:=", 1E+30,
-      "InsulatorThreshold:="	, 1,
-      "SolveFraction:="	, False,
-      "Multiplier:="		, "1",
-      "SkipMeshChecks:="	, True
-      ], 
+      "InsulatorThreshold:=", 1,
+      "SolveFraction:=", False,
+      "Multiplier:=", "1",
+      "SkipMeshChecks:=", True
+    ],
       [
         "NAME:Model Validation Settings",
-        "EntityCheckLevel:="	, "Strict",
+        "EntityCheckLevel:=", "Strict",
         "IgnoreUnclassifiedObjects:=", False,
         "SkipIntersectionChecks:=", False
     ])
-
-
 
   # @classmethod
   # def set_input(cls, input_coil: CoilDesignParam) -> None:
