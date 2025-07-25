@@ -787,7 +787,7 @@ class Project2(XformerMakerInterface):
 
     for k, v in data.items():
       if isinstance(k, str) and ("P_" in k):
-        new_data[k] = list(v)[-1]
+        new_data[k] = v
 
     if not after_copper_loss:
       self.data["_get_copper_loss_parameter"] = new_data
