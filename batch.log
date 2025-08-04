@@ -78,3 +78,50 @@ Project directory: C:\Users\5600X2\Documents\Ansoft
         [info] Materials class has been initialized! Elapsed time: 0m 0sec
 -- Message Window --
 Stopping Batch Run: 1:04:29 PM  Jul 01, 2025
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:10:25
+Location: /home/harry/opt/AnsysEM/v242/Linux64/ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 8:26:51 PM  Aug 04, 2025
+Temp directory: /tmp
+Project directory: /home/harry/Ansoft
+[info] GRPC server running on port: 48681.
+
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:10:25
+Location: /home/harry/opt/AnsysEM/v242/Linux64/ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 8:27:29 PM  Aug 04, 2025
+Temp directory: /tmp
+Project directory: /home/harry/Ansoft
+[info] GRPC server running on port: 43863.
+
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:10:25
+Location: /home/harry/opt/AnsysEM/v242/Linux64/ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 8:28:34 PM  Aug 04, 2025
+Temp directory: /tmp
+Project directory: /home/harry/Ansoft
+[info] GRPC server running on port: 34437.
+
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:10:25
+Location: /home/harry/opt/AnsysEM/v242/Linux64/ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 8:29:29 PM  Aug 04, 2025
+Temp directory: /tmp
+Project directory: /home/harry/Ansoft
+[info] GRPC server running on port: 36429.
+
+[info] Project:script0, Design:script0_0 (EddyCurrent), Coordinate system '' does not exist. The rotation axis of the harmonic force setup is set to positive Global::Z (08:29:56 PM  Aug 04, 2025)
+Stopping Batch Run: 8:30:02 PM  Aug 04, 2025
+ 
+Ansys Electronics Desktop Version 2024.2.0, Build: 2024-05-23 02:10:25
+Location: /home/harry/opt/AnsysEM/v242/Linux64/ansysedt.exe
+Non Graphical Mode: No Project??
+Starting Batch Run: 8:30:56 PM  Aug 04, 2025
+Temp directory: /tmp
+Project directory: /home/harry/Ansoft
+[info] GRPC server running on port: 38641.
+
