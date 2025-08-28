@@ -12,9 +12,9 @@
       "editor.detectIndentation": false,
       
     },
-  "editor.defaultFormatter": "ms-python.black-formatter",
+  "editor.defaultFormatter": "ms-python.autopep8",
   "python.analysis.autoImportCompletions": false,
-  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.typeCheckingMode": "basic",
   "python.languageServer": "Pylance",
   "editor.inlayHints.enabled": "on",
   "python.analysis.inlayHints.variableTypes": true,

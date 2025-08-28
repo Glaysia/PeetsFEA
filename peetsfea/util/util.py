@@ -1,15 +1,22 @@
 import shutil
-import time, os
+import time
+import os
 from typing import Any
 from ansys.aedt.core.modules.material import Material
 from ansys.aedt.core.modules.material_lib import Materials
+from ansys.aedt.core.modeler.cad.polylines import Polyline
 import numpy as np
 import pandas as pd
 
-import getpass, socket
+
+import getpass
+import socket
 
 from ansys.aedt.core import Desktop, Maxwell3d
 from ansys.aedt.core.internal.grpc_plugin_dll_class import AedtPropServer
+
+from ansys.aedt.core.visualization.report.standard import Standard
+from ansys.aedt.core.visualization.report.field import Fields
 
 user_host = f"{getpass.getuser()}@{socket.gethostname()}"
 
@@ -25,7 +32,8 @@ def log_simulation(number, state=None, pid=None, filename="log.csv"):
     초기 호출 시 새로운 레코드를 추가하고, state가 전달되면 기존 레코드의 Status를 업데이트합니다.
     """
     lock_timeout = 10  # 락 타임아웃 시간(초)
-    import csv, portalocker
+    import csv
+    import portalocker
     from datetime import datetime
 
     # 파일이 없으면 헤더를 포함하여 생성
@@ -133,17 +141,22 @@ class abstract_parameter:
         self.r = Ranges()
         self.freq_kHz = 130
 
-    def _random_choice(self, X: tuple[Any, ...]):
+    def _random_choice(self, X: list[Any]):
         return round(np.random.choice(np.arange(X[0], X[1] + X[2], X[2])), X[3])
 
     def create_desktop(self, version="2024.2", non_graphical=True):
 
         # open desktop
-        self.desktop = Desktop(version=version, non_graphical=non_graphical)
+        self.desktop = Desktop(
+            close_on_exit=False,
+            version=version,
+            non_graphical=non_graphical
+        )
         self.desktop.disable_autosave()
 
     def create_project(self):
         # project property
+        self.num = 0
         self.project_name = f"script{self.num}"
         self.solution_type = "EddyCurrent"
 
@@ -246,3 +259,195 @@ class abstract_parameter:
             self.new_data.to_csv(csv_file, mode="a", index=False, header=False)
         else:
             self.new_data.to_csv(csv_file, mode="w", index=False, header=True)
+
+    def _create_polyline(self, points, name, coil_width, coil_height, orient=None) -> Polyline:
+        assert self.M3D.modeler
+        # orient이 주어졌을 때만 kwargs에 담기
+        extra = {}
+        if orient is not None:
+            extra['xsection_orient'] = orient
+
+        polyline_obj = self.M3D.modeler.create_polyline(
+            points,
+            name=name,
+            material="copper",
+            xsection_type="Rectangle",
+            xsection_width=coil_width,
+            xsection_height=coil_height,
+            # orient이 None이면 None을 넘기지 않고 생략, 값이 있으면 그걸 넘김
+            **extra
+        )
+        return polyline_obj
+
+    def _create_polyline_litz(self, points, name, coil_width):
+        assert self.M3D.modeler
+
+        polyline_obj = self.M3D.modeler.create_polyline(
+            points,
+            name=name,
+            material="copper_Litz_wire",
+            xsection_type="Circle",
+            xsection_width=coil_width,
+            xsection_num_seg=6)
+
+        return polyline_obj
+
+    @staticmethod
+    def report_to_df(report: Standard | Fields, name_pair: list[list[str]]) -> pd.Series:
+        from ansys.aedt.core.visualization.post.solution_data import SolutionData
+        solution_data = report.get_solution_data()
+        assert isinstance(solution_data, SolutionData)
+
+        solution_data.enable_pandas_output = True
+
+        units = solution_data.units_data
+        values = solution_data._solutions_mag
+
+        assert isinstance(values, pd.DataFrame)
+
+        columns = solution_data.expressions
+
+        column_dict = {k: v for k, v in name_pair}
+
+        columns_renamed = [
+            f"({column_dict.get(col, None)})_{col}" for col in columns]
+
+        columns_with_units = []
+        for col, renamed in zip(columns, columns_renamed):
+            unit = units.get(col, "")
+
+            columns_with_units.append(f"{renamed}_[{unit}]")
+
+        values.columns = columns_with_units
+        ret = values.reset_index(drop=True).iloc[0]
+        ret = abstract_parameter.simplify_series_keys(ret)
+        ret = abstract_parameter.normalize_series_units(ret)
+        return ret
+
+    @staticmethod
+    def simplify_series_keys(series: pd.Series) -> pd.Series:
+        """Return a copy of the Series with compacted keys.
+
+        Convert keys like
+            '(Lmt)_Matrix1.L(Tx,Tx)*(Matrix1.CplCoef(Tx,Rx1)^2)_[nH]'
+        to
+            'Lmt_[nH]'
+
+        This extracts the token inside the leading parentheses and
+        preserves the trailing unit suffix (e.g. '_[nH]', '[ohm]').
+        Keys that do not match are left unchanged.
+        """
+        new_index: list[Any] = []
+        for key in series.index:
+            if isinstance(key, str):
+                # Find ")_" and "_[" positions only
+                end_token = key.find(")_")
+                unit_start = key.rfind("_[")
+
+                if end_token != -1 and unit_start != -1 and unit_start > end_token:
+                    # Extract token between '(' and ')_'
+                    token = key[1:end_token] if key.startswith(
+                        "(") else key[:end_token]
+                    # Grab until the closing ']'
+                    unit_end = key.find("]", unit_start + 2)
+                    unit_suffix = key[unit_start: unit_end +
+                                      1] if unit_end != -1 else key[unit_start:]
+                    new_index.append(f"{token}{unit_suffix}")
+                    continue
+            new_index.append(key)
+
+        renamed = series.copy()
+        renamed.index = new_index
+        return renamed
+
+    @staticmethod
+    def normalize_series_units(series: pd.Series) -> pd.Series:
+        """Normalize numeric units in the Series and update index names.
+
+        Assumes keys are already simplified like 'Name_[unit]'.
+        - Inductance: H, mH, uH, nH, pH  -> uH
+        - Resistance: mohm, ohm, kohm    -> ohm
+        - Power:      mW, W, kW          -> W
+        Values are scaled accordingly; non-matching keys remain unchanged.
+        """
+        unit_map: dict[str, tuple[str, float]] = {
+            # Inductance to uH
+            "H": ("uH", 1e6),
+            "mH": ("uH", 1e3),
+            "uH": ("uH", 1.0),
+            "nH": ("uH", 1e-3),
+            "pH": ("uH", 1e-6),
+            # Resistance to ohm
+            "mohm": ("ohm", 1e-3),
+            "ohm": ("ohm", 1.0),
+            "kohm": ("ohm", 1e3),
+            # Power to W
+            "mW": ("W", 1e-3),
+            "W": ("W", 1.0),
+            "kW": ("W", 1e3),
+        }
+
+        new_values: list[Any] = []
+        new_index: list[Any] = []
+
+        for key, val in series.items():
+            if isinstance(key, str):
+                # Expected pattern: '<base>_[<unit>]'
+                unit_pos = key.rfind("_[")
+                end_br = key.rfind("]")
+                if unit_pos != -1 and end_br != -1 and end_br > unit_pos:
+                    base = key[:unit_pos]
+                    unit = key[unit_pos + 2: end_br]
+                else:
+                    # Fallback: '<base>[<unit>]' (without the underscore)
+                    lbr = key.rfind("[")
+                    rbr = key.rfind("]")
+                    if lbr != -1 and rbr != -1 and rbr > lbr:
+                        base = key[:lbr].rstrip("_")
+                        unit = key[lbr + 1: rbr]
+                    else:
+                        new_index.append(key)
+                        new_values.append(val)
+                        continue
+
+                mapping = unit_map.get(unit)
+                if mapping is None:
+                    # Unknown unit, keep as is
+                    new_index.append(key)
+                    new_values.append(val)
+                    continue
+
+                target_unit, factor = mapping
+                try:
+                    scaled_val = float(val) * factor
+                except Exception:
+                    # Non-numeric; keep value but still rename unit
+                    scaled_val = val
+
+                new_key = f"{base}_[{target_unit}]"
+                new_index.append(new_key)
+                new_values.append(scaled_val)
+            else:
+                new_index.append(key)
+                new_values.append(val)
+
+        return pd.Series(new_values, index=new_index)
+
+    def volumetric_loss(self, assignments: str) -> str:
+        oModule = self.M3D.get_module(
+            module_name="FieldsReporter"
+        )
+
+        oModule.EnterQty("OhmicLoss")
+        oModule.EnterVol(assignments)
+        oModule.CalcOp("Integrate")
+        name = f"P_{assignments}"
+        oModule.AddNamedExpression(name, 'Fields')
+        return name
+
+    @staticmethod
+    def get_magetizing_current(Lmt_uH, freq_kHz, Vin=390):
+        import math
+        omegaL = 2*math.pi*(freq_kHz*10**3)*Lmt_uH*10**(-6)
+
+        return Vin*math.sqrt(2)/2/math.pi/(freq_kHz*10**(3))/Lmt_uH/10**(-6)/2

@@ -13,6 +13,9 @@ peetsfea/util/__init__.py
 peetsfea/util/util.py
 peetsfea/xformermaker/__init__.py
 peetsfea/xformermaker/xformermaker.py
+peetsfea/xformermaker/evdd/__init__.py
+peetsfea/xformermaker/evdd/evdd_params.py
+peetsfea/xformermaker/evdd/evdd_simul.py
 peetsfea/xformermaker/project1/__init__.py
 peetsfea/xformermaker/project1/core_builder.py
 peetsfea/xformermaker/project1/project1.py
