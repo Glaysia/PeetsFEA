@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: PeetsFEA
-Version: 0.2.0
+Version: 0.2.1
 Summary: 전력전자 자동화에 필요한 유틸리티 모듈 모음
 Home-page: https://github.com/Glaysia/PeetsFEA
 Author: Glaysia
@@ -10,10 +10,10 @@ Classifier: Operating System :: Microsoft :: Windows
 Classifier: Operating System :: POSIX :: Linux
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
-Requires-Dist: pyaedt==0.17.4
+Requires-Dist: pyaedt==0.18.0
 Requires-Dist: ipykernel>=6.30.0
-Requires-Dist: portalocker>=3.2.0
-Requires-Dist: black>=25.1.0
+Requires-Dist: numpy>=2.2.6
+Requires-Dist: pandas>=2.3.2
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
