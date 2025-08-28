@@ -1,4 +1,4 @@
-pyaedt==0.17.4
+pyaedt==0.18.0
 ipykernel>=6.30.0
-portalocker>=3.2.0
-black>=25.1.0
+numpy>=2.2.6
+pandas>=2.3.2
