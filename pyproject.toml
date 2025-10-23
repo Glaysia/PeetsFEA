@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PeetsFEA"
+version = "0.3.0"
+description = "Data-driven transformer optimization and AEDT simulation toolkit."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [
+  { name = "Harry Lee", email = "harry261@uos.ac.kr" }
+]
+keywords = ["transformer", "optimization", "pareto-front", "pyaedt", "nsga2"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: Other/Proprietary License",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "pyaedt==0.21.2",
+  "pymoo==0.6.1.5",
+  "lightgbm>=4.6.0",
+  "numpy>=2.2.6",
+  "pandas>=2.3.3",
+  "joblib>=1.5.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.2",
+  "ruff>=0.14.1",
+  "mypy>=1.18.2"
+]
+
+[project.urls]
+Homepage = "https://github.com/Glaysia/PeetsFEA"
+
+[tool.setuptools.packages.find]
+include = ["PeetsFEA*"]

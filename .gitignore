@@ -1,0 +1,47 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Test / coverage caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# IDE / editor
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / tool versions
+.python-version
+
+# Project-specific
+# Ignore temp workspace but keep the default characteristics file
+tmp/
+!tmp/characteristics_defaults.toml
+
+# Ignore AEDT/Ansys generated logs if any (common patterns)
+*.log
+*.out
