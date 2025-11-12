@@ -45,3 +45,7 @@ tmp/
 # Ignore AEDT/Ansys generated logs if any (common patterns)
 *.log
 *.out
+
+legacy_codes
+
+debug

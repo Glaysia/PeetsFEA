@@ -31,3 +31,5 @@ PeetsFEA delivers two coordinated capabilities: (1) data-driven transformer opti
 - Keep shared schemas in sync: transformers' parameter definitions must be mirrored in code, docs, and artifacts.
 - Favor reproducible pipelines (seed control, deterministic sampling) when generating candidate populations.
 - Record environment details (AEDT version, OS, Python version) so simulations can be rerun without drift.
+
+## DO NOT EDIT codes in legacy_codes
