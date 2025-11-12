@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+import textwrap
 import tomllib
 from typing import Iterable, Mapping, MutableMapping, Sequence
 
@@ -26,13 +27,14 @@ __all__ = [
     "ModelArtifactSelectionError",
     "ModelArtifactMetadata",
     "PCBPCBModelConfig",
+    "LEGACY_MODEL_RELATIVE_PATH",
     "default_legacy_model_root",
     "default_legacy_config",
     "ConfigError",
-    "DEFAULT_CHARACTERISTICS_PATH",
     "load_design_defaults",
     "merge_overrides",
     "resolve_design_vector",
+    "decision_vector_to_design",
 ]
 
 # --------------------------------------------------------------------------- #
@@ -98,6 +100,8 @@ class ParetoRunConfig:
 # --------------------------------------------------------------------------- #
 # LightGBM artifact configs (Agent B)
 # --------------------------------------------------------------------------- #
+
+LEGACY_MODEL_RELATIVE_PATH = Path("legacy_codes") / "EVDD_PCB_PCB" / "model"
 
 DEFAULT_TARGETS: tuple[str, ...] = (
     "Lmt",
@@ -217,7 +221,13 @@ def _select_latest(root: Path, target: str) -> Path:
     candidates = sorted(_iter_candidates(root, target))
     if not candidates:
         raise ModelArtifactSelectionError(
-            f"No artifacts found for target '{target}' under {root}"
+            textwrap.fill(
+                f"No LightGBM artifacts found for target '{target}' under {root}. "
+                "Re-export the models from the legacy notebook or pass an explicit "
+                "directory to `PCBPCBModelConfig.from_directory(...)` before invoking "
+                "`run_pcbpcb_nsga2()`.",
+                width=90,
+            )
         )
     return candidates[-1][1]
 
@@ -226,7 +236,12 @@ def _select_by_suffix(root: Path, target: str, suffix: str) -> Path:
     path = root / f"{target}_{suffix}.pkl"
     if not path.exists():
         raise ModelArtifactSelectionError(
-            f"Artifact '{path}' missing for target '{target}'"
+            textwrap.fill(
+                f"Artifact '{path}' missing for target '{target}'. "
+                "Ensure the timestamped pickle exists or regenerate the LightGBM "
+                "bundle before running `run_pcbpcb_nsga2()`.",
+                width=90,
+            )
         )
     return path
 
@@ -240,20 +255,24 @@ def _iter_candidates(root: Path, target: str) -> Iterable[tuple[str, Path]]:
 
 def default_legacy_model_root() -> Path:
     """
-    Locate ``legacy_codes/EVDD_PCB_PCB/model`` relative to the repo root.
+    Locate ``legacy_codes/EVDD_PCB_PCB/model`` relative to the package root.
+
+    The zero-config runner (``run_pcbpcb_nsga2``) and ``PCBPCBModel()`` rely on this
+    directory being present in source checkouts. If it was moved or omitted from a
+    distribution, callers should provide ``PCBPCBModelConfig.from_directory(...)``.
     """
 
-    candidate = (
-        Path(__file__)
-        .resolve()
-        .parents[3]
-        .joinpath("legacy_codes", "EVDD_PCB_PCB", "model")
-    )
+    base = Path(__file__).resolve().parents[3]
+    candidate = base / LEGACY_MODEL_RELATIVE_PATH
     if not candidate.exists():
-        raise ModelArtifactSelectionError(
-            "Unable to locate the legacy LightGBM artifacts. "
-            "Specify a model directory explicitly."
+        hint = textwrap.fill(
+            f"Unable to locate the legacy LightGBM artifacts expected at {candidate}. "
+            "Run the tooling from the repository root or point "
+            "`PCBPCBModelConfig.from_directory(...)` at a directory containing the "
+            "timestamped *.pkl files before invoking `run_pcbpcb_nsga2()`.",
+            width=90,
         )
+        raise ModelArtifactSelectionError(hint)
     return candidate
 
 
@@ -274,22 +293,20 @@ class ConfigError(RuntimeError):
     """Raised for malformed or missing PCB-PCB configuration files."""
 
 
-DEFAULT_CHARACTERISTICS_PATH = (
-    Path(__file__).resolve().parents[3] / "tmp" / "characteristics_defaults.toml"
-)
-
-
 def load_design_defaults(path: str | Path | None = None) -> schemas.DesignVector:
     """
-    Load the default design vector from TOML.
+    Load the default design vector.
 
     Parameters
     ----------
     path:
-        Optional override path. When ``None``, the repo-level ``tmp`` directory
-        is used.
+        Optional TOML path to override the embedded defaults. When omitted,
+        the notebook-equivalent design baked into :mod:`schemas` is returned.
     """
-    target_path = Path(path) if path else DEFAULT_CHARACTERISTICS_PATH
+    if path is None:
+        return schemas.DEFAULT_DESIGN_VECTOR
+
+    target_path = Path(path)
     if not target_path.exists():
         raise ConfigError(f"Missing defaults file: {target_path}")
 
@@ -343,3 +360,14 @@ def resolve_design_vector(
     """
     base = load_design_defaults(defaults_path)
     return merge_overrides(base, overrides)
+
+
+def decision_vector_to_design(
+    decision_vector: Sequence[int | float],
+) -> schemas.DesignVector:
+    """
+    Convert an integer decision vector (as produced by NSGA-II) into a validated
+    :class:`schemas.DesignVector`.
+    """
+
+    return schemas.decision_vector_to_design(decision_vector)

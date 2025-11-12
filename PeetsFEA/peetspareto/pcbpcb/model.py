@@ -133,6 +133,10 @@ class PCBPCBPrediction(Mapping[str, float]):
 class PCBPCBModel:
     """
     Production-ready LightGBM inference harness for the pcbpcb domain.
+
+    ``PCBPCBModel()`` may be constructed with no arguments, in which case it attempts
+    to locate the legacy ``legacy_codes/EVDD_PCB_PCB/model`` directory. This mirrors
+    the behavior expected by the zero-config ``run_pcbpcb_nsga2`` helper.
     """
 
     def __init__(self, config: PCBPCBModelConfig | None = None):
@@ -223,7 +227,15 @@ class PCBPCBModel:
         artifact_metadata: list[ModelArtifactMetadata] = []
 
         for target, path in sorted(self.config.artifact_paths.items()):
-            model = joblib.load(path)
+            try:
+                model = joblib.load(path)
+            except Exception as exc:  # pragma: no cover - exercised via monkeypatch
+                raise ModelArtifactSelectionError(
+                    "Failed to load LightGBM artifact for "
+                    f"target '{target}' at '{path}'. "
+                    "If the pickle was moved or corrupted, regenerate it before "
+                    "calling `run_pcbpcb_nsga2()`."
+                ) from exc
             _validate_feature_schema(target, model)
             models[target] = model
             artifact_metadata.append(

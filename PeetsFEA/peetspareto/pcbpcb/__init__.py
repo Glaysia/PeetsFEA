@@ -18,6 +18,12 @@ from .config import (
 from .io import records_to_dataframe, write_export_bundle
 from .model import PCBPCBModel, PCBPCBPrediction, PredictionProvenance
 from .optimizer import ParetoOptimizer, ParetoResult
+from .runtime import (
+    LegacyCandidateEncoder,
+    default_objective_aggregator,
+    default_objectives,
+    run_pcbpcb_nsga2,
+)
 from .schemas import DesignVector
 
 __all__ = [
@@ -36,6 +42,10 @@ __all__ = [
     "ParetoResult",
     "generate_pareto_front",
     "run_pareto",
+    "LegacyCandidateEncoder",
+    "default_objective_aggregator",
+    "default_objectives",
+    "run_pcbpcb_nsga2",
     "records_to_dataframe",
     "write_export_bundle",
 ]

@@ -61,8 +61,8 @@
 ## Agent Checklist & Status
 ### Agent A — Schema & Data Contracts
 - [x] Ported notebook `vars1` bounds/scales into `schemas.VariableSpec`/`DESIGN_FIELD_ORDER` constants (`PeetsFEA/peetspareto/pcbpcb/schemas.py`).
-- [ ] Embed a notebook-equivalent default `DesignVector`/dict directly in code so QA fixtures no longer depend on TOML.
-- [ ] Provide helper(s) that turn raw integer vectors into validated specs (zero-config factory for the forthcoming `CandidateEncoder`).
+- [x] Embed a notebook-equivalent default `DesignVector`/dict directly in code so QA fixtures no longer depend on TOML.
+- [x] Provide helper(s) that turn raw integer vectors into validated specs (zero-config factory for the forthcoming `CandidateEncoder`).
 
 ### Agent B — Model & Inference Service
 - [x] `PCBPCBModel` eagerly loads LightGBM artifacts and exposes batch inference + provenance (`PeetsFEA/peetspareto/pcbpcb/model.py`).
@@ -71,20 +71,20 @@
 
 ### Agent C — Optimization & Results
 - [x] Implemented `ParetoOptimizer`, `run_pareto`, `generate_pareto_front`, and IO/provenance helpers plus integration tests.
-- [ ] Build a `CandidateEncoder` that reproduces the integer search space (bounds, resolution, decode logic) and cover it with unit tests.
-- [ ] Provide a default `ObjectiveAggregator` mirroring the notebook’s Volume + total_loss objectives.
-- [ ] Finish `run_pcbpcb_nsga2()`: assemble encoder + model + objectives, run the optimizer, and emit Pareto CSV/provenance artifacts.
+- [x] Build a `CandidateEncoder` that reproduces the integer search space (bounds, resolution, decode logic) and cover it with unit tests.
+- [x] Provide a default `ObjectiveAggregator` mirroring the notebook’s Volume + total_loss objectives.
+- [x] Finish `run_pcbpcb_nsga2()`: assemble encoder + model + objectives, run the optimizer, and emit Pareto CSV/provenance artifacts.
 
 ## 결과보고 (Results Report)
 - **Agent A — Schema & Data Contracts**  
-  - _Status_: (fill in summary, date, blockers, next steps)
-  - _Artifacts_: (link to MR/branch/notebook diff)
+  - _Status_: 2024‑03‑17 — Embedded the notebook defaults directly in `schemas.DEFAULT_DESIGN_VECTOR`, added `decision_vector_to_design(...)`, and updated config/tests to run zero-config (`PeetsFEA/peetspareto/pcbpcb/schemas.py`, `config.py`, `tests/peetspareto/pcbpcb/*`). Blocker: legacy data contains fractional `Rx_width` (15.7 mm) while `VariableSpec` enforces a 1 mm step, so integer decision vectors cannot represent those points exactly—need guidance on relaxing that step vs. accepting quantization before CandidateEncoder parity tests.
+  - _Artifacts_: `PeetsFEA/peetspareto/pcbpcb/schemas.py`, `PeetsFEA/peetspareto/pcbpcb/config.py`, `tests/peetspareto/pcbpcb/test_schemas.py`, `tests/peetspareto/pcbpcb/test_config.py`
 - **Agent B — Model & Inference Service**  
-  - _Status_: (fill in summary, date, blockers, next steps)
-  - _Artifacts_: (link to MR/branch/notebook diff)
+  - _Status_: 2024-11-12 — `PCBPCBModel` now bootstraps from the legacy `legacy_codes/EVDD_PCB_PCB/model` folder by default, surfaces friendly `ModelArtifactSelectionError` guidance when artifacts are missing/corrupt, and passes new regression tests covering zero-config instantiation plus loader failures. Ready for integration with `run_pcbpcb_nsga2`.
+  - _Artifacts_: `PeetsFEA/peetspareto/pcbpcb/model.py`, `PeetsFEA/peetspareto/pcbpcb/config.py`, `tests/pcbpcb/test_model.py`
 - **Agent C — Optimization & Results**  
-  - _Status_: (fill in summary, date, blockers, next steps)
-  - _Artifacts_: (link to MR/branch/notebook diff)
+  - _Status_: 2024-12-02 — Added `LegacyCandidateEncoder` (grid snapping + repair heuristic), provenance-aware default aggregator (total_loss + geometry volume), and the zero-config `run_pcbpcb_nsga2` wrapper so the legacy NSGA-II workflow now runs end-to-end with bundled defaults and emits Pareto CSV + provenance bundles automatically.
+  - _Artifacts_: `PeetsFEA/peetspareto/pcbpcb/runtime.py`, `tests/peetspareto/pcbpcb/test_runtime.py`, `tests/test_pcbpcb_optimizer.py` (tests run via `python -m pytest tests/peetspareto/pcbpcb/test_runtime.py` and `python -m pytest tests/test_pcbpcb_optimizer.py`).
 
 ## Coordination Notes
 - Communicate via short design notes or ADRs before changing shared schemas.

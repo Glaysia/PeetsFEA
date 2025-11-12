@@ -19,6 +19,9 @@ __all__ = [
     "VariableSpec",
     "VARIABLE_SPECS",
     "DESIGN_FIELD_ORDER",
+    "DEFAULT_DESIGN_PARAMS",
+    "DEFAULT_DESIGN_VECTOR",
+    "DEFAULT_DECISION_VECTOR",
     "OPERATING_LIMITS",
     "CLEARANCE_LIMITS",
     "HEIGHT_LIMITS",
@@ -27,6 +30,7 @@ __all__ = [
     "compute_geometry_metrics",
     "DEFAULT_TX_CURRENT_A",
     "DEFAULT_RX_CURRENT_A",
+    "decision_vector_to_design",
 ]
 
 
@@ -296,6 +300,31 @@ _VARIABLE_SPEC_DATA: Mapping[str, Mapping[str, object]] = {
 
 VARIABLE_SPECS: dict[str, VariableSpec] = {
     name: VariableSpec(name=name, **_VARIABLE_SPEC_DATA[name]) for name in DESIGN_FIELD_ORDER
+}
+
+DEFAULT_DESIGN_PARAMS: Mapping[str, float | int] = {
+    "freq": 130.0,
+    "input_voltage": 400.0,
+    "w1": 80.0,
+    "l1_leg": 10.0,
+    "l1_top": 1.1,
+    "l2": 26.0,
+    "h1": 2.4,
+    "l1_center": 15.0,
+    "Tx_turns": 12,
+    "Tx_space_x": 2.5,
+    "Tx_space_y": 2.0,
+    "Tx_preg": 0.2,
+    "Tx_width": 1.0,
+    "Tx_height": 0.07,
+    "Rx_width": 12.0,
+    "Rx_height": 0.07,
+    "Rx_space_x": 1.0,
+    "Rx_space_y": 0.5,
+    "Rx_preg": 0.15,
+    "g2": 1.5,
+    "Tx_layer_space_x": 2.5,
+    "Tx_layer_space_y": 0.8,
 }
 
 OPERATING_LIMITS: Mapping[str, tuple[float, float]] = {
@@ -583,3 +612,14 @@ class DesignVector:
         payload = "|".join(payload_parts)
         digest = hashlib.blake2s(payload.encode("utf-8"), digest_size=8).hexdigest()
         return f"pcbpcb-{digest}"
+
+
+DEFAULT_DESIGN_VECTOR = DesignVector.from_mapping(DEFAULT_DESIGN_PARAMS)
+DEFAULT_DECISION_VECTOR = DEFAULT_DESIGN_VECTOR.to_raw()
+
+
+def decision_vector_to_design(
+    decision_vector: Sequence[int | float],
+) -> DesignVector:
+    """Decode a discrete decision vector into a validated :class:`DesignVector`."""
+    return DesignVector.from_raw(decision_vector)

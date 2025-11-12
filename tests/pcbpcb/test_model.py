@@ -5,8 +5,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from PeetsFEA.peetspareto.pcbpcb.config import default_legacy_config
+from PeetsFEA.peetspareto.pcbpcb.config import (
+    ModelArtifactSelectionError,
+    default_legacy_config,
+)
 from PeetsFEA.peetspareto.pcbpcb.model import (
     CORE_TARGETS,
     COPPER_TARGETS,
@@ -22,8 +26,23 @@ def _load_sample_spec(strict: bool = False) -> DesignVector:
     return DesignVector.from_mapping(row, strict=strict)
 
 
-def test_design_vector_from_dataset_allows_non_quantized_values() -> None:
-    spec = _load_sample_spec(strict=False)
+@pytest.fixture(scope="module")
+def sample_spec() -> DesignVector:
+    return _load_sample_spec(strict=False)
+
+
+@pytest.fixture(scope="module")
+def legacy_config():
+    return default_legacy_config()
+
+
+@pytest.fixture(scope="module")
+def inference_service(legacy_config):
+    return PCBPCBModel(legacy_config)
+
+
+def test_design_vector_from_dataset_allows_non_quantized_values(sample_spec: DesignVector) -> None:
+    spec = sample_spec
     assert spec.identifier.startswith("pcbpcb-")
     assert spec.effective_tx_current() > 0
     assert spec.effective_rx_current() > 0
@@ -32,11 +51,9 @@ def test_design_vector_from_dataset_allows_non_quantized_values() -> None:
     assert "freq" in params and "Tx_current" in params
 
 
-def test_pcbpcb_model_matches_manual_pipeline() -> None:
-    config = default_legacy_config()
-    service = PCBPCBModel(config)
-    spec = _load_sample_spec(strict=False)
-
+def test_pcbpcb_model_matches_manual_pipeline(inference_service, sample_spec) -> None:
+    service: PCBPCBModel = inference_service
+    spec = sample_spec
     prediction = service.predict_batch([spec])[0]
 
     tx_current = spec.effective_tx_current(service.config.tx_current_amps)
@@ -93,3 +110,22 @@ def test_pcbpcb_model_matches_manual_pipeline() -> None:
     )
     assert prediction.provenance.batch_size == 1
     assert prediction.provenance.artifact_metadata
+
+
+def test_pcbpcb_model_zero_config_ready(sample_spec):
+    service = PCBPCBModel()
+    result = service.predict_batch([sample_spec])
+    assert result and result[0].total_loss > 0
+
+
+def test_model_loader_surfaces_friendly_error(monkeypatch, legacy_config):
+    def _boom(path):
+        raise ValueError("corrupt pickle")
+
+    monkeypatch.setattr(
+        "PeetsFEA.peetspareto.pcbpcb.model.joblib.load",
+        _boom,
+    )
+
+    with pytest.raises(ModelArtifactSelectionError, match="Failed to load LightGBM artifact"):
+        PCBPCBModel(legacy_config)
