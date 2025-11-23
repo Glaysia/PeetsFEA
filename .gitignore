@@ -46,14 +46,4 @@ tmp/
 *.log
 *.out
 
-legacy_codes/**
-!legacy_codes/EVDD_litz_PCB_v2/
-legacy_codes/EVDD_litz_PCB_v2/**
-!legacy_codes/EVDD_litz_PCB_v2/model/
-!legacy_codes/EVDD_litz_PCB_v2/model/**
-!legacy_codes/EVDD_PCB_PCB/
-legacy_codes/EVDD_PCB_PCB/**
-!legacy_codes/EVDD_PCB_PCB/model/
-!legacy_codes/EVDD_PCB_PCB/model/**
-
 debug
