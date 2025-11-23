@@ -165,6 +165,7 @@ LEGACY_MODEL_ROOT = Path("legacy_codes") / "EVDD_litz_PCB_v2" / "model"
 class LitzPCBResult:
     pareto: pd.DataFrame
     scratch_dir: Path
+    pareto_path: Path
 
 
 class ProblemVariables:
@@ -504,7 +505,7 @@ def run_litzpcb_nsga2(
     if cleanup:
         _cleanup_scratch(scratch_dir)
 
-    return LitzPCBResult(pareto=pareto_df, scratch_dir=scratch_dir)
+    return LitzPCBResult(pareto=pareto_df, scratch_dir=scratch_dir, pareto_path=final_path)
 
 
 def _run_iterations(problem: LitzPCBProblem, models: Mapping[str, Any], scratch_dir: Path) -> pd.DataFrame:
