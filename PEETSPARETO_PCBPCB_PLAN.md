@@ -85,6 +85,9 @@
 - **Agent C — Optimization & Results**  
   - _Status_: 2024-12-02 — Added `LegacyCandidateEncoder` (grid snapping + repair heuristic), provenance-aware default aggregator (total_loss + geometry volume), and the zero-config `run_pcbpcb_nsga2` wrapper so the legacy NSGA-II workflow now runs end-to-end with bundled defaults and emits Pareto CSV + provenance bundles automatically.
   - _Artifacts_: `PeetsFEA/peetspareto/pcbpcb/runtime.py`, `tests/peetspareto/pcbpcb/test_runtime.py`, `tests/test_pcbpcb_optimizer.py` (tests run via `python -m pytest tests/peetspareto/pcbpcb/test_runtime.py` and `python -m pytest tests/test_pcbpcb_optimizer.py`).
+- **Simulation Integration — EVDD_PCB_PCB**  
+  - _Status_: 2025-11-23 — Wrapped the simulation flow in `run_simulation(...)` with optional deterministic `SimulationInputParameters`; `__main__` now samples one of rows 1–5 from `tmp.csv` into the dataclass before execution (falls back to random when unavailable).
+  - _Artifacts_: `PeetsFEA/fea/EVDD_PCB_PCB.py`
 
 ## Coordination Notes
 - Communicate via short design notes or ADRs before changing shared schemas.
