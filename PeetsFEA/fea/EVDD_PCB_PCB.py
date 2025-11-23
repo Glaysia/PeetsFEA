@@ -24,8 +24,11 @@ from ansys.aedt.core.modeler.cad.polylines import Polyline
 import copy
 from dataclasses import dataclass, asdict
 
-import fcntl
 import portalocker
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows
+    fcntl = None
 
 PYANSYS_BASE_DIR = os.path.join(os.path.expanduser("~"), ".peetsfea")
 PYANSYS_PRJ_DIR = os.path.join(PYANSYS_BASE_DIR, "log")
@@ -37,6 +40,14 @@ for _path in (PYANSYS_PRJ_DIR, AEDT_BASE_DIR):
 LOG_CSV_PATH = os.path.join(PYANSYS_PRJ_DIR, "log.csv")
 LOG_TXT_PATH = os.path.join(PYANSYS_PRJ_DIR, "log.txt")
 SIM_NUM_PATH = os.path.join(PYANSYS_PRJ_DIR, "simulation_num.txt")
+
+
+def _lock_simulation_counter(file_handle):
+    """Cross-platform exclusive lock for the simulation counter file."""
+    if fcntl is not None:
+        fcntl.flock(file_handle, fcntl.LOCK_EX)
+    else:
+        portalocker.lock(file_handle, portalocker.LOCK_EX)
 
 @dataclass
 class SimulationInputParameters:
@@ -1107,13 +1118,13 @@ class Sim(Parameter) :
 
         # 파일이 존재하지 않으면 생성
         if not os.path.exists(file_path):
-            with open(file_path, "w", encoding="utf-8") as file:
-                file.write("1")
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write("1")
 
         # 읽기/쓰기 모드로 파일 열기
         with open(file_path, "r+", encoding="utf-8") as file:
             # 파일 잠금: LOCK_EX는 배타적 잠금,  블로킹 모드로 실행
-            fcntl.flock(file, fcntl.LOCK_EX)
+            _lock_simulation_counter(file)
 
             # 파일에서 값 읽기
             content = int(file.read().strip())

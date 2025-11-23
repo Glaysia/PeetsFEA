@@ -30,6 +30,8 @@ from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.optimize import minimize
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
+from .._paths import resolve_legacy_root
+
 MODEL_DATE = "251112"
 MODEL_LABELS: tuple[str, ...] = (
     "Lmt",
@@ -158,7 +160,8 @@ MU, NGEN = 100, 400
 CXPB, MUTPB = 0.7, 0.3
 NUM_ITERS = 5
 
-LEGACY_MODEL_ROOT = Path("legacy_codes") / "EVDD_litz_PCB_v2" / "model"
+LITZ_MODEL_ENV_VAR = "PEETSFEA_LITZ_MODEL_ROOT"
+LEGACY_MODEL_RELATIVE_PATH = Path("legacy_codes") / "EVDD_litz_PCB_v2" / "model"
 
 
 @dataclass(frozen=True)
@@ -462,8 +465,16 @@ class LitzPCBProblem(Problem):
         out["Volume"] = volume
 
 
-def load_models(model_root: Path = LEGACY_MODEL_ROOT) -> dict[str, Any]:
-    root = Path(model_root).expanduser().resolve()
+def default_litz_model_root() -> Path:
+    return resolve_legacy_root(
+        LEGACY_MODEL_RELATIVE_PATH,
+        env_var=LITZ_MODEL_ENV_VAR,
+        description="EVDD_litz_PCB_v2 LightGBM artifacts",
+    )
+
+
+def load_models(model_root: Path | None = None) -> dict[str, Any]:
+    root = Path(model_root).expanduser().resolve() if model_root else default_litz_model_root()
     model_paths = {label: root / f"{label}_{MODEL_DATE}.pkl" for label in MODEL_LABELS}
     missing = [str(path) for path in model_paths.values() if not path.exists()]
     if missing:

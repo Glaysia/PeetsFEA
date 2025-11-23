@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PeetsFEA"
-version = "0.3.5"
+version = "0.3.6"
 description = "Data-driven transformer optimization and AEDT simulation toolkit."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -25,6 +25,7 @@ dependencies = [
   "numpy>=2.2.6",
   "pandas>=2.3.3",
   "joblib>=1.5.2",
+  "portalocker>=2.10.0",
 ]
 
 [project.optional-dependencies]
@@ -42,3 +43,36 @@ peetsfea = "PeetsFEA.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["PeetsFEA*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.data-files]
+"PeetsFEA/legacy_codes/EVDD_litz_PCB_v2/model" = [
+  "legacy_codes/EVDD_litz_PCB_v2/model/B_center_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/B_left_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/B_top_left_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/copperloss_Rx1_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/copperloss_Rx2_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/copperloss_Tx_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/coreloss_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/Llt_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/Lmt_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/magnetizing_copperloss_Rx1_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/magnetizing_copperloss_Rx2_251112.pkl",
+  "legacy_codes/EVDD_litz_PCB_v2/model/magnetizing_copperloss_Tx_251112.pkl",
+]
+"PeetsFEA/legacy_codes/EVDD_PCB_PCB/model" = [
+  "legacy_codes/EVDD_PCB_PCB/model/B_center_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/B_left_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/B_top_left_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/copperloss_Rx1_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/copperloss_Rx2_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/copperloss_Tx_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/coreloss_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/Llt_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/Lmt_251021.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/magnetizing_copperloss_Rx1_251017.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/magnetizing_copperloss_Rx2_251017.pkl",
+  "legacy_codes/EVDD_PCB_PCB/model/magnetizing_copperloss_Tx_251021.pkl",
+]

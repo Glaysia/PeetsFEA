@@ -18,6 +18,7 @@ from typing import Iterable, Mapping, MutableMapping, Sequence
 
 from . import schemas
 from .protocols import ObjectiveDefinition
+from .._paths import resolve_legacy_root
 
 __all__ = [
     "OptimizationLoopConfig",
@@ -262,18 +263,24 @@ def default_legacy_model_root() -> Path:
     distribution, callers should provide ``PCBPCBModelConfig.from_directory(...)``.
     """
 
-    base = Path(__file__).resolve().parents[3]
-    candidate = base / LEGACY_MODEL_RELATIVE_PATH
-    if not candidate.exists():
+    try:
+        return resolve_legacy_root(
+            LEGACY_MODEL_RELATIVE_PATH,
+            env_var="PEETSFEA_PCB_MODEL_ROOT",
+            description="EVDD_PCB_PCB LightGBM artifacts",
+            error_cls=ModelArtifactSelectionError,
+        )
+    except ModelArtifactSelectionError as exc:
         hint = textwrap.fill(
-            f"Unable to locate the legacy LightGBM artifacts expected at {candidate}. "
-            "Run the tooling from the repository root or point "
-            "`PCBPCBModelConfig.from_directory(...)` at a directory containing the "
-            "timestamped *.pkl files before invoking `run_pcbpcb_nsga2()`.",
+            (
+                f"{exc}. "
+                "Point `PCBPCBModelConfig.from_directory(...)` at the LightGBM folder "
+                "or set PEETSFEA_PCB_MODEL_ROOT to an absolute path before invoking "
+                "`run_pcbpcb_nsga2()`."
+            ),
             width=90,
         )
-        raise ModelArtifactSelectionError(hint)
-    return candidate
+        raise ModelArtifactSelectionError(hint) from exc
 
 
 def default_legacy_config(*, suffix: str | None = None) -> PCBPCBModelConfig:
