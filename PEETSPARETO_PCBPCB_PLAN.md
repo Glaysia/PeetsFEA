@@ -88,6 +88,9 @@
 - **Simulation Integration — EVDD_PCB_PCB**  
   - _Status_: 2025-11-23 — Wrapped the simulation flow in `run_simulation(...)` with optional deterministic `SimulationInputParameters`; `__main__` now samples one of rows 1–5 from `tmp.csv` into the dataclass before execution (falls back to random when unavailable).
   - _Artifacts_: `PeetsFEA/fea/EVDD_PCB_PCB.py`
+- **Agent C — LitzPCB Notebook Wrapper**  
+  - _Status_: 2025-11-23 — Added `run_litzpcb_nsga2(show_plot=False, cleanup=True)` to replay the `EVDD_litz_PCB_v2` NSGA-II notebook against the legacy LightGBM artifacts, writing temporary Pareto CSVs under `~/.peetsfea/pareto/litzpcb_*` and cleaning them up after the run. Kept the notebook’s objective math, constraints, and backup CSV pattern for traceability; not executed here due to runtime cost.
+  - _Artifacts_: `PeetsFEA/peetspareto/litzpcb/runtime.py`, `PeetsFEA/peetspareto/litzpcb/__init__.py`, `PeetsFEA/peetspareto/__init__.py`
 
 ## Coordination Notes
 - Communicate via short design notes or ADRs before changing shared schemas.
