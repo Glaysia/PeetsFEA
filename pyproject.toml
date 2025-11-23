@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PeetsFEA"
-version = "0.3.7"
+version = "0.3.8"
 description = "Data-driven transformer optimization and AEDT simulation toolkit."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,11 +21,14 @@ classifiers = [
 dependencies = [
   "pyaedt==0.22.0",
   "pymoo==0.6.1.5",
+  "scikit-learn==1.4.0",
   "lightgbm>=4.6.0",
-  "numpy>=2.2.6",
   "pandas>=2.3.3",
   "joblib>=1.5.2",
-  "portalocker>=2.10.0",
+  "portalocker",
+  "numpy",
+  # Needed because LightGBM's sklearn wrapper calls into scikit-learn utilities
+  # (e.g., _LGBMValidateData). Without it, litzpcb crashes with "'NoneType' object is not callable".
 ]
 
 [project.optional-dependencies]
